@@ -20,9 +20,12 @@
 body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
   background:var(--bg);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
 .wrap{max-width:720px;margin:0 auto;padding:24px 20px 80px}
-header{text-align:center;padding:36px 0 20px}
-.brand{font-size:13px;letter-spacing:.35em;color:var(--gold);font-weight:700;margin-bottom:14px}
-header h1{font-size:30px;color:var(--navy);font-weight:800;letter-spacing:.04em;line-height:1.35}
+header{text-align:center;padding:32px 0 20px}
+.logo-row{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:6px}
+.logo-row img{width:84px;height:auto;flex:0 0 auto}
+.logo-row .ttl{text-align:left}
+.brand{font-size:13px;letter-spacing:.25em;color:var(--gold);font-weight:700;margin-bottom:8px}
+header h1{font-size:27px;color:var(--navy);font-weight:800;letter-spacing:.04em;line-height:1.3}
 header .sub{margin-top:12px;color:var(--ink-soft);font-size:14px}
 
 .progress{margin:8px 0 28px;height:6px;background:var(--line);border-radius:99px;overflow:hidden}
@@ -103,7 +106,8 @@ header .sub{margin-top:12px;color:var(--ink-soft);font-size:14px}
   header{padding:10px 0}.progress,.pcount{display:none}
 }
 @media(max-width:480px){
-  header h1{font-size:24px}.rtype{font-size:26px}
+  header h1{font-size:21px}.rtype{font-size:26px}
+  .logo-row img{width:66px}.logo-row{gap:11px}
   .slabel{flex:0 0 95px;font-size:12px}.hh-grid{grid-template-columns:1fr 1fr}
   .taste-grid{grid-template-columns:1fr 1fr!important}
 }
@@ -134,8 +138,13 @@ header .sub{margin-top:12px;color:var(--ink-soft);font-size:14px}
 <body>
 <div class="wrap">
   <header>
-    <div class="brand">ViVi 不動産</div>
-    <h1>リノベ好み診断書</h1>
+    <div class="logo-row">
+      <img src="img/vivit.png" alt="ViViット" onerror="this.style.display='none'">
+      <div class="ttl">
+        <div class="brand">ViVi不動産株式会社</div>
+        <h1>リノベ好み診断書</h1>
+      </div>
+    </div>
     <div class="sub" id="sub">まずはご家族の構成を選んでください。<br>構成に合わせた質問で、ぴったりのリノベ方針をご提案します。</div>
   </header>
   <div id="app"></div>
