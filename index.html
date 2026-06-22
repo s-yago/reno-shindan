@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>リノベ好み診断書 | ViVi不動産</title>
+<style>
+/* ============================================================
+   ▼ 編集は HTML下部の data スクリプトだけでOK ▼
+   家族構成（HOUSEHOLDS）ごとに設問（questions）を持ちます。
+   タイプ定義・結果文言は全構成で共通です。
+   ============================================================ */
+:root{
+  --navy:#1f3a5f; --navy-d:#142840;
+  --gold:#c9a24b; --gold-l:#e3c987;
+  --bg:#f7f4ee; --card:#fff; --ink:#2a2a2a; --ink-soft:#5c6470;
+  --line:#e4ddd0; --shadow:0 10px 40px rgba(31,58,95,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:720px;margin:0 auto;padding:24px 20px 80px}
+header{text-align:center;padding:36px 0 20px}
+.brand{font-size:13px;letter-spacing:.35em;color:var(--gold);font-weight:700;margin-bottom:14px}
+header h1{font-size:30px;color:var(--navy);font-weight:800;letter-spacing:.04em;line-height:1.35}
+header .sub{margin-top:12px;color:var(--ink-soft);font-size:14px}
+
+.progress{margin:8px 0 28px;height:6px;background:var(--line);border-radius:99px;overflow:hidden}
+.progress span{display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-l));transition:width .4s cubic-bezier(.4,0,.2,1)}
+.pcount{text-align:right;font-size:12px;color:var(--ink-soft);margin-bottom:18px;letter-spacing:.05em}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);
+  padding:30px 26px;margin-bottom:20px;animation:rise .5s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.qnum{display:inline-block;font-size:12px;font-weight:700;color:var(--gold);letter-spacing:.2em;margin-bottom:10px}
+.qtext{font-size:19px;font-weight:700;color:var(--navy);margin-bottom:20px;line-height:1.5}
+.opts{display:flex;flex-direction:column;gap:11px}
+.opt{display:flex;align-items:center;gap:13px;padding:15px 17px;border:1.5px solid var(--line);
+  border-radius:12px;cursor:pointer;background:#fff;transition:all .18s ease;font-size:15px}
+.opt:hover{border-color:var(--gold-l);background:#fdfaf3}
+.opt.sel{border-color:var(--navy);background:#f2f6fb;box-shadow:inset 0 0 0 1px var(--navy)}
+.opt .dot{flex:0 0 20px;height:20px;border-radius:50%;border:2px solid var(--line);transition:all .18s}
+.opt.sel .dot{border-color:var(--navy);background:var(--navy);box-shadow:inset 0 0 0 3px #fff}
+
+/* 家族構成の選択（最初の画面） */
+.hh-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hh{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:22px 16px;cursor:pointer;
+  text-align:center;transition:all .18s}
+.hh:hover{border-color:var(--gold);background:#fdfaf3;transform:translateY(-2px)}
+.hh .ico{font-size:30px;display:block;margin-bottom:8px}
+.hh .nm{font-size:15px;font-weight:700;color:var(--navy)}
+.hh .de{font-size:12px;color:var(--ink-soft);margin-top:3px}
+
+.actions{display:flex;gap:12px;margin-top:8px}
+.btn{flex:1;padding:15px;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;
+  font-family:inherit;letter-spacing:.05em;transition:all .2s}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-main{background:var(--navy);color:#fff}
+.btn-main:not(:disabled):hover{background:var(--navy-d);transform:translateY(-1px)}
+.btn-sub{background:#fff;color:var(--navy);border:1.5px solid var(--line);flex:0 0 auto;padding:15px 22px}
+.btn-sub:hover{border-color:var(--navy)}
+
+.result{animation:rise .6s ease both}
+.rhead{text-align:center;padding:10px 0 26px}
+.rhead .lead{font-size:14px;color:var(--ink-soft);letter-spacing:.1em}
+.rtype{font-size:32px;font-weight:800;color:var(--navy);margin:8px 0 6px;letter-spacing:.03em}
+.rtype .em{color:var(--gold)}
+.rhead .tag{font-size:15px;color:var(--ink-soft)}
+.rhead .hhname{display:inline-block;margin-top:10px;font-size:12px;color:var(--gold);
+  border:1px solid var(--gold-l);border-radius:99px;padding:3px 14px;letter-spacing:.1em}
+.rcard{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);
+  padding:30px 26px;margin-bottom:18px}
+.rcard h3{font-size:15px;color:var(--gold);font-weight:700;letter-spacing:.12em;margin-bottom:14px;
+  padding-bottom:10px;border-bottom:1px solid var(--line)}
+.rcard p{font-size:15px;color:var(--ink);margin-bottom:10px}
+.rcard ul{list-style:none;margin-top:6px}
+.rcard li{font-size:15px;padding:9px 0 9px 26px;position:relative;border-bottom:1px dashed var(--line)}
+.rcard li:last-child{border-bottom:none}
+.rcard li::before{content:"";position:absolute;left:4px;top:17px;width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.scores{margin-top:6px}
+.srow{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.slabel{flex:0 0 130px;font-size:13px;color:var(--ink-soft)}
+.sbar{flex:1;height:9px;background:var(--line);border-radius:99px;overflow:hidden}
+.sbar span{display:block;height:100%;background:linear-gradient(90deg,var(--navy),#3a6ea5);border-radius:99px}
+.sbar.top span{background:linear-gradient(90deg,var(--gold),var(--gold-l))}
+.sval{flex:0 0 34px;text-align:right;font-size:13px;font-weight:700;color:var(--navy)}
+.memo label{display:block;font-size:13px;color:var(--ink-soft);margin-bottom:6px}
+.memo textarea{width:100%;min-height:90px;padding:13px;border:1.5px solid var(--line);border-radius:10px;
+  font-family:inherit;font-size:14px;resize:vertical}
+.memo textarea:focus{outline:none;border-color:var(--navy)}
+.cust{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.cust input{flex:1;min-width:140px;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;
+  font-family:inherit;font-size:14px}
+.cust input:focus{outline:none;border-color:var(--navy)}
+.rfoot{text-align:center;margin-top:24px;font-size:12px;color:var(--ink-soft);letter-spacing:.08em}
+.rfoot .date{margin-top:4px}
+
+@media print{
+  body{background:#fff}.wrap{max-width:100%;padding:0}
+  .no-print{display:none!important}
+  .rcard,.card{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+  header{padding:10px 0}.progress,.pcount{display:none}
+}
+@media(max-width:480px){
+  header h1{font-size:24px}.rtype{font-size:26px}
+  .slabel{flex:0 0 95px;font-size:12px}.hh-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">ViVi 不動産</div>
+    <h1>リノベ好み診断書</h1>
+    <div class="sub" id="sub">まずはご家族の構成を選んでください。<br>構成に合わせた質問で、ぴったりのリノベ方針をご提案します。</div>
+  </header>
+  <div id="app"></div>
+</div>
+
+<!-- ============================================================
+     ▼ データ（ここを編集してください）
+     ============================================================ -->
+<script id="data">
+/* 暮らしタイプ（全構成共通）。結果のバー並び順もこの順。 */
+const TYPES = {
+  family:  { name:"つながり", label:"つながり重視タイプ" },
+  privacy: { name:"自分時間", label:"自分時間重視タイプ" },
+  guest:   { name:"もてなし", label:"ホテルライクタイプ" },
+  func:    { name:"機能・収納", label:"家事ラク合理タイプ" },
+  hobby:   { name:"こだわり", label:"こだわり表現タイプ" },
+};
+
+/* 結果文言（全構成共通の土台）。構成別の追記は HOUSEHOLDS の note で行う。 */
+const RESULTS = {
+  family:{ catch:"つながりを、住まいの真ん中に。",
+    desc:"人と自然に顔を合わせ、会話が生まれる住まいを大切にされるタイプです。空間をゆるやかにつなぐ間取りがぴったりです。",
+    plan:["LDKを広く一体化し、対面キッチンで過ごす時間を共有","仕切りを最小限にし、可変式の間仕切りで変化に対応","自然と人が集まる動線・居場所づくり","温かみのある木質フローリングで居心地のよい雰囲気に"]},
+  privacy:{ catch:"自分だけの、静かな居場所を。",
+    desc:"一人で落ち着ける時間と空間を大切にされるタイプです。集中できる個室や書斎、ゆったり浸れる水回りのある住まいがおすすめです。",
+    plan:["書斎・ワークスペースを独立確保し防音にも配慮","個室をしっかり区切り、それぞれの時間を尊重","浴室を広めにとり、癒しの水回りへ","調光照明で落ち着いた空気感を演出"]},
+  guest:{ catch:"人を招きたくなる、ホテルライクな住まい。",
+    desc:"洗練された空間で人をもてなすことに喜びを感じるタイプです。生活感を抑え、デザイン性の高いLDKと美しい水回りのある住まいがぴったりです。",
+    plan:["広く開放的なLDKを主役に、来客動線と生活動線を分離","見せない収納で、いつでも整った空間をキープ","デザイン性の高い設備を採用","間接照明やアクセントクロスで上質感を演出"]},
+  func:{ catch:"毎日がラクになる、合理的な住まい。",
+    desc:"家事のしやすさと快適な動線を何より大切にされるタイプです。収納量と水回りの集約で、暮らしの手間を減らす住まいがおすすめです。",
+    plan:["キッチン・洗面・浴室を近接させ家事動線を最短に","大容量の収納を計画的に配置","汚れにくく手入れの楽な素材を採用","回遊動線で移動もスムーズな間取りに"]},
+  hobby:{ catch:"好きなものに囲まれた、自分らしい住まい。",
+    desc:"趣味やこだわりを暮らしに取り入れたいタイプです。趣味専用のスペースや、愛着のある素材を活かした個性ある住まいがぴったりです。",
+    plan:["土間・アトリエ・ガレージなど趣味専用スペースを確保","好きなものを飾れる見せる収納を造作","無垢材やタイルなど素材感を活かした内装","世界観を表現できる照明・カラーコーディネート"]},
+};
+
+/* ▼ 家族構成ごとの設問セット
+   各構成: { ico, name, desc(選択画面の補足), note(結果への一言追記), questions[10] }
+   設問の各選択肢 points は TYPES のキーに加点。               */
+const HOUSEHOLDS = {
+
+  dinks:{ ico:"💑", name:"DINKS夫婦", desc:"夫婦お二人",
+    note:"お二人の時間と将来の暮らしやすさを両立できる住まいを意識すると、満足度が高まります。",
+    questions:[
+      {q:"お二人で家にいるとき、一番過ごしたい場所は？",opts:[
+        {t:"並んで過ごせるリビング・ソファ",points:{family:2,guest:1}},
+        {t:"それぞれ自分の時間を持てる部屋",points:{privacy:2}},
+        {t:"お酒や料理を楽しむダイニング・キッチン",points:{guest:2,hobby:1}},
+        {t:"家事がはかどる効率的な水回り",points:{func:2}}]},
+      {q:"理想のキッチンは？",opts:[
+        {t:"二人で並んで料理できる広め対面型",points:{family:2,guest:1}},
+        {t:"片方が集中できる独立型",points:{privacy:1,func:1}},
+        {t:"来客にも映えるおしゃれなオープン型",points:{guest:2}},
+        {t:"片付けやすいコンパクト機能型",points:{func:2}}]},
+      {q:"在宅ワークや書斎について近いのは？",opts:[
+        {t:"二人で使える共有ワークスペース",points:{family:2}},
+        {t:"それぞれ独立した仕事部屋がほしい",points:{privacy:2}},
+        {t:"リビングの一角でおしゃれに",points:{guest:1,hobby:1}},
+        {t:"省スペースで機能的に",points:{func:2}}]},
+      {q:"休日の過ごし方は？",opts:[
+        {t:"二人で映画や食事を楽しむ",points:{family:2}},
+        {t:"それぞれの趣味に没頭",points:{privacy:1,hobby:2}},
+        {t:"友人を招いてホームパーティ",points:{guest:2}},
+        {t:"家を整えて快適に過ごす",points:{func:2}}]},
+      {q:"収納で重視するのは？",opts:[
+        {t:"二人の物をまとめて大容量に",points:{family:1,func:2}},
+        {t:"それぞれの物を分けて管理",points:{privacy:2}},
+        {t:"生活感を見せない隠す収納",points:{guest:2,func:1}},
+        {t:"趣味の道具を飾れる収納",points:{hobby:2}}]},
+      {q:"内装の好みは？",opts:[
+        {t:"温かみのあるナチュラルな質感",points:{family:2,hobby:1}},
+        {t:"静かで上質な落ち着き",points:{privacy:2}},
+        {t:"ホテルのような洗練",points:{guest:2}},
+        {t:"手入れが楽でシンプル",points:{func:2}}]},
+      {q:"水回りで重視するのは？",opts:[
+        {t:"二人で使いやすい広さ",points:{family:2,func:1}},
+        {t:"ゆっくり浸れる癒しの浴室",points:{privacy:2}},
+        {t:"デザイン性の高い洗面・浴室",points:{guest:2}},
+        {t:"掃除しやすさ重視",points:{func:2}}]},
+      {q:"将来について意識したいのは？",opts:[
+        {t:"将来家族が増えても対応できる可変性",points:{family:2,func:1}},
+        {t:"二人それぞれの時間を保てる住まい",points:{privacy:2}},
+        {t:"いつでも人を招ける家",points:{guest:2}},
+        {t:"長く快適に暮らせる手のかからない家",points:{func:2}}]},
+      {q:"リノベで一番ワクワクするのは？",opts:[
+        {t:"二人で寛げる理想のリビング",points:{family:2}},
+        {t:"自分だけの落ち着ける場所",points:{privacy:2}},
+        {t:"人を呼びたくなる素敵な空間",points:{guest:2}},
+        {t:"毎日の暮らしが楽になること",points:{func:2}}]},
+      {q:"あえて選ぶなら、譲れないのは？",opts:[
+        {t:"広いリビング",points:{family:2,guest:1}},
+        {t:"自分専用の部屋・書斎",points:{privacy:2}},
+        {t:"こだわりのキッチン・浴室",points:{guest:1,func:1,hobby:1}},
+        {t:"趣味の部屋・土間",points:{hobby:2}}]},
+    ]},
+
+  family3:{ ico:"👨‍👩‍👦", name:"家族3人", desc:"ご夫婦＋お子さま1人",
+    note:"お子さまの成長に合わせて変化できる間取りにしておくと、長く快適に暮らせます。",
+    questions:[
+      {q:"家族で一番長く過ごしたい場所は？",opts:[
+        {t:"家族が集まるリビング",points:{family:2,guest:1}},
+        {t:"親が落ち着ける場所も確保したい",points:{privacy:2}},
+        {t:"来客ももてなせる広いLDK",points:{guest:2,family:1}},
+        {t:"家事がしやすいキッチン・水回り",points:{func:2}}]},
+      {q:"お子さまのスペースについて近いのは？",opts:[
+        {t:"リビング近くで様子を見守れる",points:{family:2}},
+        {t:"成長に合わせ個室をしっかり",points:{privacy:2}},
+        {t:"片付けやすく整えやすく",points:{func:2}},
+        {t:"のびのび遊べる広さ・土間など",points:{hobby:2,family:1}}]},
+      {q:"理想のキッチンは？",opts:[
+        {t:"子を見守れる対面・アイランド",points:{family:2,guest:1}},
+        {t:"料理に集中できる独立型",points:{privacy:1,func:1}},
+        {t:"見た目も美しいオープン型",points:{guest:2}},
+        {t:"収納・動線重視のシステム型",points:{func:2}}]},
+      {q:"間取りで優先したいのは？",opts:[
+        {t:"仕切りの少ない開放的な空間",points:{family:2,guest:1}},
+        {t:"個室がしっかり確保された区切り",points:{privacy:2}},
+        {t:"収納たっぷりで生活感を抑える",points:{func:2,guest:1}},
+        {t:"趣味や遊びのスペースを確保",points:{hobby:2}}]},
+      {q:"収納で重視するのは？",opts:[
+        {t:"家族の物をまとめて大容量に",points:{family:1,func:2}},
+        {t:"各自のスペースを分ける",points:{privacy:2}},
+        {t:"見せない美しい収納",points:{guest:2,func:1}},
+        {t:"おもちゃ・趣味を飾れる収納",points:{hobby:2}}]},
+      {q:"内装の好みは？",opts:[
+        {t:"温かみのあるナチュラルな木の質感",points:{family:2,hobby:1}},
+        {t:"落ち着いた上質な空間",points:{privacy:2}},
+        {t:"ホテルのような洗練",points:{guest:2}},
+        {t:"汚れにくく手入れが楽な素材",points:{func:2}}]},
+      {q:"水回りで重視するのは？",opts:[
+        {t:"家族が使いやすい広さ・配置",points:{family:2,func:1}},
+        {t:"ゆっくり浸れる癒しの空間",points:{privacy:2}},
+        {t:"デザイン性の高いおしゃれさ",points:{guest:2}},
+        {t:"掃除しやすさと家事動線",points:{func:2}}]},
+      {q:"将来の暮らしで意識したいのは？",opts:[
+        {t:"子の成長に合わせた可変性",points:{family:2,func:1}},
+        {t:"親も自分の時間を持てる住まい",points:{privacy:2}},
+        {t:"いつでも人を招ける家",points:{guest:2}},
+        {t:"家事がラクで暮らしやすい家",points:{func:2}}]},
+      {q:"リノベで一番ワクワクするのは？",opts:[
+        {t:"家族が笑顔で集まる風景",points:{family:2}},
+        {t:"自分だけの落ち着ける場所",points:{privacy:2}},
+        {t:"人を呼びたくなる素敵な空間",points:{guest:2}},
+        {t:"毎日の暮らしが楽になること",points:{func:2}}]},
+      {q:"あえて選ぶなら、譲れないのは？",opts:[
+        {t:"広いリビング",points:{family:2,guest:1}},
+        {t:"自分・子の個室",points:{privacy:2}},
+        {t:"こだわりのキッチン・浴室",points:{guest:1,func:1,hobby:1}},
+        {t:"趣味・遊びの部屋",points:{hobby:2}}]},
+    ]},
+
+  family4:{ ico:"👨‍👩‍👧‍👦", name:"家族4人以上", desc:"お子さま2人以上",
+    note:"人数が多いぶん、収納量と家事動線、個室の取り方が暮らしやすさを大きく左右します。",
+    questions:[
+      {q:"家族で一番大切にしたい場所は？",opts:[
+        {t:"全員が集まれる広いリビング",points:{family:2,guest:1}},
+        {t:"それぞれが落ち着ける個室",points:{privacy:2}},
+        {t:"来客ももてなせるLDK",points:{guest:2,family:1}},
+        {t:"家事が回るキッチン・水回り",points:{func:2}}]},
+      {q:"子ども部屋の考え方に近いのは？",opts:[
+        {t:"リビング近くで家族の気配を感じる",points:{family:2}},
+        {t:"成長に合わせ個室を分ける",points:{privacy:2}},
+        {t:"片付けやすく管理しやすく",points:{func:2}},
+        {t:"のびのび過ごせる広さ",points:{hobby:1,family:1}}]},
+      {q:"理想のキッチンは？",opts:[
+        {t:"家族と会話できる対面型",points:{family:2,guest:1}},
+        {t:"料理に集中できる独立型",points:{privacy:1,func:1}},
+        {t:"おしゃれなオープン型",points:{guest:2}},
+        {t:"大人数でも回る大容量システム型",points:{func:2}}]},
+      {q:"収納で最も重視するのは？",opts:[
+        {t:"家族全員分の大容量収納",points:{family:1,func:2}},
+        {t:"各自専用のスペース",points:{privacy:2}},
+        {t:"見せない隠す収納",points:{guest:2,func:1}},
+        {t:"趣味・季節物を飾れる収納",points:{hobby:2}}]},
+      {q:"間取りで優先したいのは？",opts:[
+        {t:"開放的につながる広いLDK",points:{family:2,guest:1}},
+        {t:"人数分の個室確保",points:{privacy:2}},
+        {t:"収納と動線重視で生活感を抑える",points:{func:2,guest:1}},
+        {t:"趣味・多目的スペースを確保",points:{hobby:2}}]},
+      {q:"内装の好みは？",opts:[
+        {t:"温かみのあるナチュラルな質感",points:{family:2,hobby:1}},
+        {t:"落ち着いた上質な空間",points:{privacy:2}},
+        {t:"ホテルのような洗練",points:{guest:2}},
+        {t:"汚れにくく丈夫で手入れが楽",points:{func:2}}]},
+      {q:"水回りで重視するのは？",opts:[
+        {t:"朝も混まない広さ・2ボウルなど",points:{family:2,func:1}},
+        {t:"ゆっくり浸れる癒しの浴室",points:{privacy:2}},
+        {t:"デザイン性の高い洗面・浴室",points:{guest:2}},
+        {t:"掃除しやすさと家事効率",points:{func:2}}]},
+      {q:"家事について近いのは？",opts:[
+        {t:"家族で分担しやすい配置",points:{family:2}},
+        {t:"一人で静かに片付けたい",points:{privacy:1,func:1}},
+        {t:"見える場所は常にきれいに",points:{guest:2}},
+        {t:"とにかく時短・効率重視",points:{func:2}}]},
+      {q:"リノベで一番ワクワクするのは？",opts:[
+        {t:"家族みんなが集まる風景",points:{family:2}},
+        {t:"自分の落ち着ける場所",points:{privacy:2}},
+        {t:"人を呼びたくなる空間",points:{guest:2}},
+        {t:"毎日の家事・暮らしが楽になること",points:{func:2}}]},
+      {q:"あえて選ぶなら、譲れないのは？",opts:[
+        {t:"広いリビング・ダイニング",points:{family:2,guest:1}},
+        {t:"人数分の個室",points:{privacy:2}},
+        {t:"大容量の収納・パントリー",points:{func:2}},
+        {t:"趣味・多目的の部屋",points:{hobby:2}}]},
+    ]},
+
+  nisetai:{ ico:"🏠", name:"二世帯", desc:"親世帯との同居",
+    note:"親世帯との「距離感」と「共有する範囲」をどう設計するかが、二世帯リノベ満足の鍵です。",
+    questions:[
+      {q:"親世帯との暮らし方で理想に近いのは？",opts:[
+        {t:"日常的に顔を合わせ支え合う",points:{family:2}},
+        {t:"互いのプライバシーをしっかり分ける",points:{privacy:2}},
+        {t:"集まれる広い共用空間がほしい",points:{guest:2,family:1}},
+        {t:"家事・水回りを効率よく分担",points:{func:2}}]},
+      {q:"キッチンの考え方は？",opts:[
+        {t:"みんなで囲む大きな共用キッチン",points:{family:2,guest:1}},
+        {t:"世帯ごとに分けて独立",points:{privacy:2}},
+        {t:"来客も意識したおしゃれな共用型",points:{guest:2}},
+        {t:"使いやすさ重視のシステム型",points:{func:2}}]},
+      {q:"玄関・水回りの分け方は？",opts:[
+        {t:"基本は共用でつながりを保つ",points:{family:2}},
+        {t:"玄関・浴室も世帯ごとに分けたい",points:{privacy:2}},
+        {t:"来客用の動線も確保",points:{guest:2}},
+        {t:"共用で効率よく・掃除も楽に",points:{func:2}}]},
+      {q:"リビングについて近いのは？",opts:[
+        {t:"全員で過ごせる広い共用リビング",points:{family:2,guest:1}},
+        {t:"世帯ごとにリビングを分ける",points:{privacy:2}},
+        {t:"来客をもてなせる上質な空間",points:{guest:2}},
+        {t:"コンパクトで管理しやすく",points:{func:2}}]},
+      {q:"収納で重視するのは？",opts:[
+        {t:"共用で大容量にまとめる",points:{family:1,func:2}},
+        {t:"世帯ごとに分けて管理",points:{privacy:2}},
+        {t:"見せない美しい収納",points:{guest:2,func:1}},
+        {t:"趣味の物を飾れる収納",points:{hobby:2}}]},
+      {q:"内装の好みは？",opts:[
+        {t:"温かみのあるナチュラルな質感",points:{family:2,hobby:1}},
+        {t:"落ち着いた上質な空間",points:{privacy:2}},
+        {t:"ホテルのような洗練",points:{guest:2}},
+        {t:"手入れが楽でバリアフリー配慮",points:{func:2}}]},
+      {q:"将来（親の高齢化など）で意識したいのは？",opts:[
+        {t:"いつでも支え合える近さ",points:{family:2}},
+        {t:"互いに干渉しすぎない距離",points:{privacy:2}},
+        {t:"来客・介護も想定した広さ",points:{guest:1,func:1}},
+        {t:"段差解消・手すりなど暮らしやすさ",points:{func:2}}]},
+      {q:"音やプライバシーへの配慮は？",opts:[
+        {t:"気配を感じられるくらいがちょうどいい",points:{family:2}},
+        {t:"防音・遮音をしっかりしたい",points:{privacy:2}},
+        {t:"来客時に生活音が気にならない設計",points:{guest:2}},
+        {t:"水回りの配置で音問題を解決",points:{func:2}}]},
+      {q:"リノベで一番ワクワクするのは？",opts:[
+        {t:"家族が自然と集まる風景",points:{family:2}},
+        {t:"それぞれが落ち着ける住まい",points:{privacy:2}},
+        {t:"人を呼びたくなる空間",points:{guest:2}},
+        {t:"みんなの暮らしが楽になること",points:{func:2}}]},
+      {q:"あえて選ぶなら、譲れないのは？",opts:[
+        {t:"全員集まれる共用空間",points:{family:2,guest:1}},
+        {t:"世帯ごとの独立性",points:{privacy:2}},
+        {t:"使いやすい水回り・収納",points:{func:2}},
+        {t:"趣味・こだわりの空間",points:{hobby:2}}]},
+    ]},
+
+  single:{ ico:"🧑", name:"一人暮らし", desc:"おひとりさま",
+    note:"自分の好きと暮らしやすさを存分に追求できるのが、一人暮らしリノベの醍醐味です。",
+    questions:[
+      {q:"家で一番過ごしたい場所は？",opts:[
+        {t:"くつろげるリビング・ソファ",points:{family:2,guest:1}},
+        {t:"集中できる自分の書斎・作業空間",points:{privacy:2,hobby:1}},
+        {t:"人を招けるおしゃれな空間",points:{guest:2}},
+        {t:"使いやすいキッチン・水回り",points:{func:2}}]},
+      {q:"理想のキッチンは？",opts:[
+        {t:"開放的に過ごせる対面型",points:{family:2,guest:1}},
+        {t:"自分のペースで使える独立型",points:{privacy:2}},
+        {t:"来客にも映えるおしゃれ型",points:{guest:2}},
+        {t:"コンパクトで片付けやすい",points:{func:2}}]},
+      {q:"在宅ワーク・趣味スペースは？",opts:[
+        {t:"リビングと一体でゆったり",points:{family:2}},
+        {t:"独立した集中できる部屋",points:{privacy:2}},
+        {t:"見せ場になるおしゃれな一角",points:{guest:1,hobby:1}},
+        {t:"省スペースで機能的に",points:{func:2}}]},
+      {q:"休日の過ごし方は？",opts:[
+        {t:"のんびり家で寛ぐ",points:{family:2}},
+        {t:"趣味に没頭する",points:{privacy:1,hobby:2}},
+        {t:"友人を招いて過ごす",points:{guest:2}},
+        {t:"家を整えて快適に",points:{func:2}}]},
+      {q:"収納で重視するのは？",opts:[
+        {t:"まとめて使いやすい大容量",points:{family:1,func:2}},
+        {t:"自分の物を機能的に",points:{privacy:2}},
+        {t:"見せない美しい収納",points:{guest:2,func:1}},
+        {t:"趣味の物を飾れる収納",points:{hobby:2}}]},
+      {q:"内装の好みは？",opts:[
+        {t:"温かみのあるナチュラル",points:{family:2,hobby:1}},
+        {t:"静かで上質な落ち着き",points:{privacy:2}},
+        {t:"ホテルのような洗練",points:{guest:2}},
+        {t:"シンプルで手入れが楽",points:{func:2}}]},
+      {q:"水回りで重視するのは？",opts:[
+        {t:"ゆったり使える広さ",points:{family:1,func:1}},
+        {t:"ゆっくり浸れる癒しの浴室",points:{privacy:2}},
+        {t:"デザイン性の高い洗面・浴室",points:{guest:2}},
+        {t:"掃除しやすさ重視",points:{func:2}}]},
+      {q:"暮らしで大切にしたいのは？",opts:[
+        {t:"人とつながれる開放感",points:{family:2}},
+        {t:"自分だけの落ち着く時間",points:{privacy:2}},
+        {t:"いつでも人を招ける家",points:{guest:2}},
+        {t:"手間なく快適に暮らせること",points:{func:2}}]},
+      {q:"リノベで一番ワクワクするのは？",opts:[
+        {t:"くつろげる理想の空間",points:{family:2}},
+        {t:"自分だけの世界をつくること",points:{privacy:1,hobby:2}},
+        {t:"人を呼びたくなる素敵な部屋",points:{guest:2}},
+        {t:"毎日の暮らしが楽になること",points:{func:2}}]},
+      {q:"あえて選ぶなら、譲れないのは？",opts:[
+        {t:"広く開放的なリビング",points:{family:2,guest:1}},
+        {t:"集中できる自分の部屋",points:{privacy:2}},
+        {t:"こだわりのキッチン・浴室",points:{guest:1,func:1,hobby:1}},
+        {t:"趣味の部屋・土間・アトリエ",points:{hobby:2}}]},
+    ]},
+
+  singleparent:{ ico:"👩‍👧", name:"シングルマザー／ファザー", desc:"親子での暮らし",
+    note:"家事・育児を一人で回せる動線と、お子さまの安心・見守りやすさが暮らしやすさの軸になります。",
+    questions:[
+      {q:"親子で一番過ごしたい場所は？",opts:[
+        {t:"いつも一緒にいられるリビング",points:{family:2}},
+        {t:"子の個室と自分の場所を分けたい",points:{privacy:2}},
+        {t:"来客も迎えられる広いLDK",points:{guest:2,family:1}},
+        {t:"家事がはかどるキッチン・水回り",points:{func:2}}]},
+      {q:"お子さまの様子について近いのは？",opts:[
+        {t:"家事中もいつも見守れる配置",points:{family:2,func:1}},
+        {t:"成長に合わせ個室を確保",points:{privacy:2}},
+        {t:"片付けやすく整えやすく",points:{func:2}},
+        {t:"のびのび遊べるスペース",points:{hobby:1,family:1}}]},
+      {q:"理想のキッチンは？",opts:[
+        {t:"子を見ながら使える対面型",points:{family:2}},
+        {t:"自分のペースで使える独立型",points:{privacy:1,func:1}},
+        {t:"おしゃれで気分が上がる型",points:{guest:2}},
+        {t:"時短になる効率システム型",points:{func:2}}]},
+      {q:"家事について最も重視するのは？",opts:[
+        {t:"子と過ごしながら家事ができる",points:{family:2}},
+        {t:"短時間で静かに片付けたい",points:{privacy:1,func:1}},
+        {t:"見える場所はきれいに保ちたい",points:{guest:2}},
+        {t:"とにかく時短・動線の良さ",points:{func:2}}]},
+      {q:"収納で重視するのは？",opts:[
+        {t:"親子の物をまとめて管理",points:{family:1,func:2}},
+        {t:"自分と子で分けて整理",points:{privacy:2}},
+        {t:"見せない隠す収納",points:{guest:2,func:1}},
+        {t:"子の作品や趣味を飾れる収納",points:{hobby:2}}]},
+      {q:"内装の好みは？",opts:[
+        {t:"温かみのあるナチュラルな質感",points:{family:2,hobby:1}},
+        {t:"落ち着ける静かな空間",points:{privacy:2}},
+        {t:"気分の上がるおしゃれさ",points:{guest:2}},
+        {t:"汚れにくく手入れが楽",points:{func:2}}]},
+      {q:"水回りで重視するのは？",opts:[
+        {t:"親子で使いやすい広さ・配置",points:{family:2,func:1}},
+        {t:"一日の疲れを癒せる浴室",points:{privacy:2}},
+        {t:"デザイン性の高さ",points:{guest:2}},
+        {t:"掃除しやすさと家事動線",points:{func:2}}]},
+      {q:"安心・安全で意識したいのは？",opts:[
+        {t:"子の気配を感じられる間取り",points:{family:2}},
+        {t:"子が落ち着ける個室",points:{privacy:2}},
+        {t:"来客時も安心な動線",points:{guest:1,func:1}},
+        {t:"段差や危険を減らした設計",points:{func:2}}]},
+      {q:"リノベで一番ワクワクするのは？",opts:[
+        {t:"親子で笑顔で過ごす風景",points:{family:2}},
+        {t:"自分が落ち着ける時間と場所",points:{privacy:2}},
+        {t:"人を呼びたくなる素敵な空間",points:{guest:2}},
+        {t:"毎日の家事・暮らしが楽になること",points:{func:2}}]},
+      {q:"あえて選ぶなら、譲れないのは？",opts:[
+        {t:"親子で過ごす広いリビング",points:{family:2,guest:1}},
+        {t:"子と自分の個室",points:{privacy:2}},
+        {t:"家事がラクな水回り・収納",points:{func:2}},
+        {t:"子の遊び・趣味スペース",points:{hobby:2}}]},
+    ]},
+
+  senior:{ ico:"👵", name:"シニア夫婦", desc:"子育て後のご夫婦",
+    note:"これからの暮らしやすさ（段差・動線・手入れの楽さ）と、ご夫婦それぞれの居場所づくりが大切です。",
+    questions:[
+      {q:"これからお二人で過ごしたい場所は？",opts:[
+        {t:"一緒に寛げるリビング",points:{family:2,guest:1}},
+        {t:"それぞれの趣味の部屋",points:{privacy:2,hobby:1}},
+        {t:"子や孫を迎えられる広い空間",points:{guest:2,family:1}},
+        {t:"手入れが楽で動きやすい家",points:{func:2}}]},
+      {q:"理想のキッチンは？",opts:[
+        {t:"二人で過ごせる対面型",points:{family:2,guest:1}},
+        {t:"自分のペースで使える型",points:{privacy:1,func:1}},
+        {t:"来客にも映える型",points:{guest:2}},
+        {t:"立ち座りが楽な高さ・動線重視",points:{func:2}}]},
+      {q:"これからの住まいで最も意識したいのは？",opts:[
+        {t:"家族・来客が集まれる広さ",points:{family:2,guest:1}},
+        {t:"それぞれが落ち着ける居場所",points:{privacy:2}},
+        {t:"おもてなしできる上質な空間",points:{guest:2}},
+        {t:"段差解消・手すりなどの安全性",points:{func:2}}]},
+      {q:"趣味の時間について近いのは？",opts:[
+        {t:"二人で楽しめる共有空間",points:{family:2}},
+        {t:"それぞれ独立した趣味部屋",points:{privacy:2,hobby:1}},
+        {t:"作品を飾れる見せる空間",points:{hobby:2,guest:1}},
+        {t:"省スペースで気軽に",points:{func:2}}]},
+      {q:"収納で重視するのは？",opts:[
+        {t:"二人の物をまとめて取り出しやすく",points:{family:1,func:2}},
+        {t:"それぞれの物を分けて",points:{privacy:2}},
+        {t:"見せない美しい収納",points:{guest:2,func:1}},
+        {t:"趣味・思い出の品を飾れる収納",points:{hobby:2}}]},
+      {q:"内装の好みは？",opts:[
+        {t:"温かみのあるナチュラルな質感",points:{family:2,hobby:1}},
+        {t:"落ち着いた上質な空間",points:{privacy:2}},
+        {t:"ホテルのような洗練",points:{guest:2}},
+        {t:"明るく・滑りにくく安全な素材",points:{func:2}}]},
+      {q:"水回りで重視するのは？",opts:[
+        {t:"二人で使いやすい広さ",points:{family:2,func:1}},
+        {t:"ゆっくり浸れる癒しの浴室",points:{privacy:2}},
+        {t:"デザイン性の高さ",points:{guest:2}},
+        {t:"手すり・段差解消・ヒートショック対策",points:{func:2}}]},
+      {q:"将来の安心で意識したいのは？",opts:[
+        {t:"家族がいつでも集まれる家",points:{family:2}},
+        {t:"夫婦それぞれの時間を保てる家",points:{privacy:2}},
+        {t:"人を招き続けられる家",points:{guest:2}},
+        {t:"バリアフリーで長く安心な家",points:{func:2}}]},
+      {q:"リノベで一番ワクワクするのは？",opts:[
+        {t:"家族・夫婦で過ごす穏やかな時間",points:{family:2}},
+        {t:"自分の趣味に没頭できる場所",points:{privacy:1,hobby:2}},
+        {t:"人を招きたくなる素敵な空間",points:{guest:2}},
+        {t:"これからの暮らしが楽で安心なこと",points:{func:2}}]},
+      {q:"あえて選ぶなら、譲れないのは？",opts:[
+        {t:"家族が集まる広いリビング",points:{family:2,guest:1}},
+        {t:"自分の趣味・書斎の部屋",points:{privacy:2,hobby:1}},
+        {t:"安全で使いやすい水回り",points:{func:2}},
+        {t:"こだわりの空間・素材",points:{hobby:2}}]},
+    ]},
+
+};
+</script>
+<!-- ============================================================ -->
+
+<script>
+const data = {TYPES, RESULTS, HOUSEHOLDS};
+const state = {hh:null, answers:{}};
+const app = document.getElementById("app");
+const sub = document.getElementById("sub");
+
+/* ---- 家族構成の選択画面 ---- */
+function renderSelect(){
+  let html = `<div class="card"><div class="qnum">STEP 1</div>
+    <div class="qtext">ご家族の構成を選んでください</div><div class="hh-grid">`;
+  for(const k in data.HOUSEHOLDS){
+    const h=data.HOUSEHOLDS[k];
+    html+=`<div class="hh" onclick="startHH('${k}')">
+      <span class="ico">${h.ico}</span>
+      <div class="nm">${h.name}</div><div class="de">${h.desc}</div></div>`;
+  }
+  html+=`</div></div>`;
+  app.innerHTML=html;
+}
+
+function startHH(k){
+  state.hh=k; state.answers={};
+  sub.innerHTML = data.HOUSEHOLDS[k].name+"の暮らしに合わせた10の質問です。";
+  renderQuiz();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---- 設問画面 ---- */
+function renderQuiz(){
+  const Q = data.HOUSEHOLDS[state.hh].questions;
+  const total=Q.length, answered=Object.keys(state.answers).length;
+  let html=`<div class="progress no-print"><span style="width:${answered/total*100}%"></span></div>
+    <div class="pcount no-print">${answered} / ${total} 問</div>`;
+  Q.forEach((q,i)=>{
+    html+=`<div class="card"><div class="qnum">QUESTION ${i+1}</div>
+      <div class="qtext">${q.q}</div><div class="opts">`;
+    q.opts.forEach((o,j)=>{
+      const sel=state.answers[i]===j?"sel":"";
+      html+=`<div class="opt ${sel}" onclick="pick(${i},${j})"><div class="dot"></div><div>${o.t}</div></div>`;
+    });
+    html+=`</div></div>`;
+  });
+  const ready=answered===total;
+  html+=`<div class="actions no-print">
+    <button class="btn btn-sub" onclick="backToSelect()">構成を選び直す</button>
+    <button class="btn btn-main" ${ready?"":"disabled"} onclick="showResult()">
+      ${ready?"診断結果を見る":`あと ${total-answered} 問`}</button></div>`;
+  app.innerHTML=html;
+}
+
+function backToSelect(){
+  state.hh=null; state.answers={};
+  sub.innerHTML="まずはご家族の構成を選んでください。<br>構成に合わせた質問で、ぴったりのリノベ方針をご提案します。";
+  renderSelect();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function pick(i,j){
+  state.answers[i]=j;
+  renderQuiz();
+  const cards=document.querySelectorAll(".card");
+  if(state.answers[i+1]===undefined && cards[i+1]) cards[i+1].scrollIntoView({behavior:"smooth",block:"center"});
+}
+
+/* ---- スコア集計・結果 ---- */
+function calcScores(){
+  const Q=data.HOUSEHOLDS[state.hh].questions;
+  const s={}; Object.keys(data.TYPES).forEach(k=>s[k]=0);
+  Q.forEach((q,i)=>{const o=q.opts[state.answers[i]]; if(o)for(const k in o.points)s[k]+=o.points[k];});
+  return s;
+}
+
+function showResult(){
+  const H=data.HOUSEHOLDS[state.hh];
+  const scores=calcScores(), keys=Object.keys(data.TYPES);
+  const max=Math.max(...keys.map(k=>scores[k]));
+  const topKey=keys.find(k=>scores[k]===max);
+  const T=data.TYPES[topKey], R=data.RESULTS[topKey];
+  const maxScore=max||1;
+  const today=new Date().toLocaleDateString("ja-JP",{year:"numeric",month:"long",day:"numeric"});
+
+  let bars="";
+  [...keys].sort((a,b)=>scores[b]-scores[a]).forEach(k=>{
+    const top=k===topKey?"top":"";
+    bars+=`<div class="srow"><div class="slabel">${data.TYPES[k].label}</div>
+      <div class="sbar ${top}"><span style="width:${scores[k]/maxScore*100}%"></span></div>
+      <div class="sval">${scores[k]}</div></div>`;
+  });
+  let plan=""; R.plan.forEach(p=>plan+=`<li>${p}</li>`);
+
+  app.innerHTML=`<div class="result">
+    <div class="cust no-print">
+      <input id="cname" placeholder="お客様のお名前（任意）">
+      <input id="cprop" placeholder="物件名・メモ（任意）"></div>
+    <div class="rhead">
+      <div class="lead">あなたの暮らしタイプは</div>
+      <div class="rtype"><span class="em">${T.label}</span></div>
+      <div class="tag">${R.catch}</div>
+      <div class="hhname">${H.ico} ${H.name}</div></div>
+    <div class="rcard"><h3>診断コメント</h3>
+      <p>${R.desc}</p><p>${H.note}</p></div>
+    <div class="rcard"><h3>おすすめのリノベ方針</h3><ul>${plan}</ul></div>
+    <div class="rcard"><h3>あなたの暮らしバランス</h3><div class="scores">${bars}</div></div>
+    <div class="rcard memo no-print"><h3>営業メモ</h3>
+      <label>ヒアリング内容・次回提案ポイントなど</label>
+      <textarea placeholder="例）予算◯◯万円、入居希望時期、気になっていた点 など"></textarea></div>
+    <div class="rfoot"><div>ViVi不動産株式会社　中古×リノベーション</div>
+      <div class="date">診断日：${today}</div></div>
+    <div class="actions no-print" style="margin-top:24px">
+      <button class="btn btn-sub" onclick="location.reload()">最初から</button>
+      <button class="btn btn-main" onclick="window.print()">印刷・PDF保存</button></div>
+  </div>`;
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+renderSelect();
+</script>
+</body>
+</html>
