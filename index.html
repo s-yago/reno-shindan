@@ -105,7 +105,30 @@ header .sub{margin-top:12px;color:var(--ink-soft);font-size:14px}
 @media(max-width:480px){
   header h1{font-size:24px}.rtype{font-size:26px}
   .slabel{flex:0 0 95px;font-size:12px}.hh-grid{grid-template-columns:1fr 1fr}
+  .taste-grid{grid-template-columns:1fr 1fr!important}
 }
+
+/* テイスト選択（写真付き） */
+.taste-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.taste{background:#fff;border:1.5px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;
+  transition:all .18s;text-align:center}
+.taste:hover{border-color:var(--gold);transform:translateY(-3px);box-shadow:var(--shadow)}
+.taste .ph{width:100%;aspect-ratio:4/3;background:#ece6da;display:flex;align-items:center;justify-content:center;
+  color:#a99e88;font-size:12px;letter-spacing:.05em;background-size:cover;background-position:center}
+.taste .ph.noimg::after{content:"イメージ写真";opacity:.7}
+.taste .body{padding:13px 10px}
+.taste .nm{font-size:15px;font-weight:700;color:var(--navy)}
+.taste .de{font-size:11px;color:var(--ink-soft);margin-top:3px;line-height:1.5}
+
+/* 結果の参考写真 */
+.gallery{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.gallery figure{margin:0;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.gallery .img{width:100%;aspect-ratio:4/3;background:#ece6da;display:flex;align-items:center;justify-content:center;
+  color:#a99e88;font-size:12px;background-size:cover;background-position:center}
+.gallery figcaption{font-size:12px;color:var(--ink-soft);text-align:center;padding:7px 0;background:#faf8f3}
+.tastebadge{display:inline-block;margin-left:6px;font-size:12px;color:var(--gold);
+  border:1px solid var(--gold-l);border-radius:99px;padding:3px 12px;letter-spacing:.08em}
+@media(max-width:480px){.gallery{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -129,6 +152,21 @@ const TYPES = {
   guest:   { name:"もてなし", label:"ホテルライクタイプ" },
   func:    { name:"機能・収納", label:"家事ラク合理タイプ" },
   hobby:   { name:"こだわり", label:"こだわり表現タイプ" },
+};
+
+/* ▼ インテリアのテイスト（写真で選ぶ）
+   img フォルダに次のファイル名で画像を置くと自動で表示されます。
+   未設置の間はグレーのイメージ枠が出ます。
+   画像の置き場所：このHTMLと同じ階層の img/ フォルダ
+   例) img/natural_main.jpg  img/natural_kitchen.jpg  img/natural_living.jpg */
+const IMG_DIR = "img/";   // ← 画像フォルダ名（変えたいときはここだけ）
+const TASTES = {
+  natural:    { name:"ナチュラル系",   desc:"木の温もり・優しい色合い",          key:"natural" },
+  nordic:     { name:"北欧系",         desc:"白基調・明るくシンプル",            key:"nordic" },
+  hotel:      { name:"ホテルライク系", desc:"洗練・高級感・間接照明",            key:"hotel" },
+  wamodern:   { name:"和モダン系",     desc:"和の落ち着き・木と黒・格子",        key:"wamodern" },
+  industrial: { name:"インダストリアル系", desc:"コンクリート・黒鉄・古材の男前", key:"industrial" },
+  cafe:       { name:"カフェ／フレンチ系", desc:"白×アンティーク・タイル・可愛い", key:"cafe" },
 };
 
 /* 結果文言（全構成共通の土台）。構成別の追記は HOUSEHOLDS の note で行う。 */
@@ -545,8 +583,8 @@ const HOUSEHOLDS = {
 <!-- ============================================================ -->
 
 <script>
-const data = {TYPES, RESULTS, HOUSEHOLDS};
-const state = {hh:null, answers:{}};
+const data = {TYPES, RESULTS, HOUSEHOLDS, TASTES, IMG_DIR};
+const state = {hh:null, taste:null, answers:{}, restore:null};
 const app = document.getElementById("app");
 const sub = document.getElementById("sub");
 
@@ -561,12 +599,51 @@ function renderSelect(){
       <div class="nm">${h.name}</div><div class="de">${h.desc}</div></div>`;
   }
   html+=`</div></div>`;
+  html+=`<div class="actions no-print">
+    <button class="btn btn-sub" style="flex:1" onclick="document.getElementById('loadFile').click()">
+      保存データを読み込む</button></div>
+    <input type="file" id="loadFile" accept=".json,application/json" style="display:none" onchange="loadData(event)">`;
   app.innerHTML=html;
 }
 
 function startHH(k){
-  state.hh=k; state.answers={};
-  sub.innerHTML = data.HOUSEHOLDS[k].name+"の暮らしに合わせた10の質問です。";
+  state.hh=k; state.answers={}; state.taste=null;
+  renderTaste();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---- テイスト選択画面（写真付き） ---- */
+function renderTaste(){
+  sub.innerHTML = data.HOUSEHOLDS[state.hh].name+"。次に、好みのインテリアの雰囲気を選んでください。";
+  let html=`<div class="card"><div class="qnum">STEP 2</div>
+    <div class="qtext">好みのテイストは？<span style="font-size:13px;font-weight:400;color:var(--ink-soft)">　ピンとくる写真を選んでください</span></div>
+    <div class="taste-grid">`;
+  for(const k in data.TASTES){
+    const t=data.TASTES[k];
+    // 画像が無い場合は noimg クラスでグレー枠（onerrorで自動フォールバック）
+    const src=data.IMG_DIR+t.key+"_main.jpg";
+    html+=`<div class="taste" onclick="startTaste('${k}')">
+      <div class="ph noimg" style="background-image:url('${src}')"
+        onload=""></div>
+      <div class="body"><div class="nm">${t.name}</div><div class="de">${t.desc}</div></div>
+    </div>`;
+  }
+  html+=`</div></div>
+    <div class="actions no-print">
+      <button class="btn btn-sub" style="flex:1" onclick="backToSelect()">家族構成を選び直す</button></div>`;
+  app.innerHTML=html;
+  // 画像が実在すれば noimg を外して「イメージ写真」表記を消す
+  document.querySelectorAll(".taste .ph").forEach(ph=>{
+    const url=ph.style.backgroundImage.slice(5,-2);
+    const im=new Image();
+    im.onload=()=>ph.classList.remove("noimg");
+    im.src=url;
+  });
+}
+
+function startTaste(k){
+  state.taste=k;
+  sub.innerHTML = data.HOUSEHOLDS[state.hh].name+"の暮らしに合わせた10の質問です。";
   renderQuiz();
   window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -588,14 +665,14 @@ function renderQuiz(){
   });
   const ready=answered===total;
   html+=`<div class="actions no-print">
-    <button class="btn btn-sub" onclick="backToSelect()">構成を選び直す</button>
+    <button class="btn btn-sub" onclick="renderTaste()">テイストを選び直す</button>
     <button class="btn btn-main" ${ready?"":"disabled"} onclick="showResult()">
       ${ready?"診断結果を見る":`あと ${total-answered} 問`}</button></div>`;
   app.innerHTML=html;
 }
 
 function backToSelect(){
-  state.hh=null; state.answers={};
+  state.hh=null; state.taste=null; state.answers={};
   sub.innerHTML="まずはご家族の構成を選んでください。<br>構成に合わせた質問で、ぴったりのリノベ方針をご提案します。";
   renderSelect();
   window.scrollTo({top:0,behavior:"smooth"});
@@ -634,29 +711,107 @@ function showResult(){
   });
   let plan=""; R.plan.forEach(p=>plan+=`<li>${p}</li>`);
 
+  // テイスト参考写真
+  const TS = data.TASTES[state.taste];
+  let gallery="";
+  if(TS){
+    const kSrc=data.IMG_DIR+TS.key+"_kitchen.jpg";
+    const lSrc=data.IMG_DIR+TS.key+"_living.jpg";
+    gallery=`<div class="rcard"><h3>参考イメージ
+        <span class="tastebadge">${TS.name}</span></h3>
+      <div class="gallery">
+        <figure><div class="img" data-src="${kSrc}">イメージ写真</div><figcaption>キッチン</figcaption></figure>
+        <figure><div class="img" data-src="${lSrc}">イメージ写真</div><figcaption>リビング</figcaption></figure>
+      </div>
+      <p style="font-size:13px;color:var(--ink-soft);margin-top:12px">※ ${TS.name}の参考イメージです。実際の施工事例は担当者がご案内します。</p>
+    </div>`;
+  }
+
+  const r = state.restore || {};
+  const esc = s => (s||"").replace(/"/g,"&quot;");
   app.innerHTML=`<div class="result">
     <div class="cust no-print">
-      <input id="cname" placeholder="お客様のお名前（任意）">
-      <input id="cprop" placeholder="物件名・メモ（任意）"></div>
+      <input id="cname" placeholder="お客様のお名前（任意）" value="${esc(r.cname)}">
+      <input id="cprop" placeholder="物件名・メモ（任意）" value="${esc(r.cprop)}"></div>
     <div class="rhead">
       <div class="lead">あなたの暮らしタイプは</div>
       <div class="rtype"><span class="em">${T.label}</span></div>
       <div class="tag">${R.catch}</div>
-      <div class="hhname">${H.ico} ${H.name}</div></div>
+      <div class="hhname">${H.ico} ${H.name}</div>
+      ${TS?`<div class="hhname">${TS.name}</div>`:""}</div>
     <div class="rcard"><h3>診断コメント</h3>
       <p>${R.desc}</p><p>${H.note}</p></div>
     <div class="rcard"><h3>おすすめのリノベ方針</h3><ul>${plan}</ul></div>
+    ${gallery}
     <div class="rcard"><h3>あなたの暮らしバランス</h3><div class="scores">${bars}</div></div>
     <div class="rcard memo no-print"><h3>営業メモ</h3>
       <label>ヒアリング内容・次回提案ポイントなど</label>
-      <textarea placeholder="例）予算◯◯万円、入居希望時期、気になっていた点 など"></textarea></div>
+      <textarea id="memo" placeholder="例）予算◯◯万円、入居希望時期、気になっていた点 など">${r.memo||""}</textarea></div>
     <div class="rfoot"><div>ViVi不動産株式会社　中古×リノベーション</div>
-      <div class="date">診断日：${today}</div></div>
-    <div class="actions no-print" style="margin-top:24px">
+      <div class="date">診断日：${r.date||today}</div></div>
+    <div class="actions no-print" style="margin-top:18px">
       <button class="btn btn-sub" onclick="location.reload()">最初から</button>
-      <button class="btn btn-main" onclick="window.print()">印刷・PDF保存</button></div>
+      <button class="btn btn-main" onclick="saveData()">データ保存</button>
+      <button class="btn btn-main" onclick="window.print()">印刷・PDF</button></div>
   </div>`;
+  // 画像が実在すれば背景に差し込み（無ければ「イメージ写真」のまま）
+  document.querySelectorAll(".gallery .img").forEach(el=>{
+    const url=el.getAttribute("data-src");
+    const im=new Image();
+    im.onload=()=>{el.style.backgroundImage=`url('${url}')`;el.textContent="";};
+    im.src=url;
+  });
+  state.restore=null;
   window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---- データ保存（JSON書き出し） ---- */
+function saveData(){
+  const cname=(document.getElementById("cname")||{}).value||"";
+  const cprop=(document.getElementById("cprop")||{}).value||"";
+  const memo=(document.getElementById("memo")||{}).value||"";
+  const payload={
+    app:"vivi-reno-shindan", version:1,
+    savedAt:new Date().toISOString(),
+    date:new Date().toLocaleDateString("ja-JP",{year:"numeric",month:"long",day:"numeric"}),
+    hh:state.hh, taste:state.taste, answers:state.answers,
+    cname, cprop, memo
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const stamp=new Date().toISOString().slice(0,10);
+  const safe=(cname||"診断").replace(/[\\/:*?"<>|]/g,"_");
+  const a=document.createElement("a");
+  a.href=url; a.download=`リノベ診断_${safe}_${stamp}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* ---- データ読み込み（JSON復元） ---- */
+function loadData(e){
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(d.app!=="vivi-reno-shindan"||!data.HOUSEHOLDS[d.hh])
+        throw new Error("このツールの保存データではないようです。");
+      state.hh=d.hh;
+      state.taste=d.taste||null;
+      state.answers=d.answers||{};
+      state.restore={cname:d.cname,cprop:d.cprop,memo:d.memo,date:d.date};
+      sub.innerHTML=data.HOUSEHOLDS[d.hh].name+"の診断データを読み込みました。";
+      // 全問回答済みなら結果へ、未完なら設問画面へ
+      const total=data.HOUSEHOLDS[d.hh].questions.length;
+      if(Object.keys(state.answers).length>=total) showResult();
+      else renderQuiz();
+    }catch(err){
+      alert("読み込めませんでした。\n"+(err.message||"ファイル形式を確認してください。"));
+    }
+    e.target.value=""; // 同じファイルを再選択できるよう
+  };
+  reader.readAsText(file,"utf-8");
 }
 
 renderSelect();
