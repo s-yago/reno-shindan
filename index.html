@@ -167,8 +167,9 @@ const TYPES = {
    img フォルダに次のファイル名で画像を置くと自動で表示されます。
    未設置の間はグレーのイメージ枠が出ます。
    画像の置き場所：このHTMLと同じ階層の img/ フォルダ
-   例) img/natural_main.jpg  img/natural_kitchen.jpg  img/natural_living.jpg */
+   例) img/natural_main.jpg（テイスト選択とリビング表示に使用）  img/natural_kitchen.jpg */
 const IMG_DIR = "img/";   // ← 画像フォルダ名（変えたいときはここだけ）
+const IMG_EXT = ".jpg";   // ← 画像の拡張子（.png か .jpg。写真の形式に合わせる）
 const TASTES = {
   natural:    { name:"ナチュラル系",   desc:"木の温もり・優しい色合い",          key:"natural" },
   nordic:     { name:"北欧系",         desc:"白基調・明るくシンプル",            key:"nordic" },
@@ -592,7 +593,7 @@ const HOUSEHOLDS = {
 <!-- ============================================================ -->
 
 <script>
-const data = {TYPES, RESULTS, HOUSEHOLDS, TASTES, IMG_DIR};
+const data = {TYPES, RESULTS, HOUSEHOLDS, TASTES, IMG_DIR, IMG_EXT};
 const state = {hh:null, taste:null, answers:{}, restore:null};
 const app = document.getElementById("app");
 const sub = document.getElementById("sub");
@@ -630,7 +631,7 @@ function renderTaste(){
   for(const k in data.TASTES){
     const t=data.TASTES[k];
     // 画像が無い場合は noimg クラスでグレー枠（onerrorで自動フォールバック）
-    const src=data.IMG_DIR+t.key+"_main.jpg";
+    const src=data.IMG_DIR+t.key+"_main"+data.IMG_EXT;
     html+=`<div class="taste" onclick="startTaste('${k}')">
       <div class="ph noimg" style="background-image:url('${src}')"
         onload=""></div>
@@ -724,13 +725,13 @@ function showResult(){
   const TS = data.TASTES[state.taste];
   let gallery="";
   if(TS){
-    const kSrc=data.IMG_DIR+TS.key+"_kitchen.jpg";
-    const lSrc=data.IMG_DIR+TS.key+"_living.jpg";
+    const lSrc=data.IMG_DIR+TS.key+"_main"+data.IMG_EXT;
+    const kSrc=data.IMG_DIR+TS.key+"_kitchen"+data.IMG_EXT;
     gallery=`<div class="rcard"><h3>参考イメージ
         <span class="tastebadge">${TS.name}</span></h3>
       <div class="gallery">
-        <figure><div class="img" data-src="${kSrc}">イメージ写真</div><figcaption>キッチン</figcaption></figure>
         <figure><div class="img" data-src="${lSrc}">イメージ写真</div><figcaption>リビング</figcaption></figure>
+        <figure><div class="img" data-src="${kSrc}">イメージ写真</div><figcaption>キッチン</figcaption></figure>
       </div>
       <p style="font-size:13px;color:var(--ink-soft);margin-top:12px">※ ${TS.name}の参考イメージです。実際の施工事例は担当者がご案内します。</p>
     </div>`;
