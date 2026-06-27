@@ -15,6 +15,7 @@
   --gold:#c9a24b; --gold-l:#e3c987;
   --bg:#f7f4ee; --card:#fff; --ink:#2a2a2a; --ink-soft:#5c6470;
   --line:#e4ddd0; --shadow:0 10px 40px rgba(31,58,95,.10);
+  --planroom:#f2f6fb; --planacc:#faf3e2; --white:#ffffff;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
@@ -132,6 +133,8 @@ header .sub{margin-top:12px;color:var(--ink-soft);font-size:14px}
 .gallery figcaption{font-size:12px;color:var(--ink-soft);text-align:center;padding:7px 0;background:#faf8f3}
 .tastebadge{display:inline-block;margin-left:6px;font-size:12px;color:var(--gold);
   border:1px solid var(--gold-l);border-radius:99px;padding:3px 12px;letter-spacing:.08em}
+.floorplan{background:#fbfaf7;border:1px solid var(--line);border-radius:10px;padding:12px}
+.floorplan svg{width:100%;height:auto;display:block}
 @media(max-width:480px){.gallery{grid-template-columns:1fr}}
 </style>
 </head>
@@ -197,6 +200,63 @@ const RESULTS = {
     desc:"趣味やこだわりを暮らしに取り入れたいタイプです。趣味専用のスペースや、愛着のある素材を活かした個性ある住まいがぴったりです。",
     plan:["土間・アトリエ・ガレージなど趣味専用スペースを確保","好きなものを飾れる見せる収納を造作","無垢材やタイルなど素材感を活かした内装","世界観を表現できる照明・カラーコーディネート"]},
 };
+
+/* ▼ 暮らしタイプ別の間取りイメージ図（SVG）
+   CSS変数で配色。改行は ‖ で区切ると2行になります。 */
+function _room(x,y,w,h,label,fill){
+  let t="";
+  if(label){const ls=label.split("‖");
+    const ly=y+h/2-(ls.length-1)*6;
+    t=`<text x="${x+w/2}" y="${ly}" font-size="10.5" fill="var(--ink)" text-anchor="middle" dominant-baseline="middle">`+
+      ls.map((s,i)=>`<tspan x="${x+w/2}" dy="${i?13:0}">${s}</tspan>`).join("")+`</text>`;}
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill||'var(--planroom)'}" stroke="var(--navy)" stroke-width="2"/>`+t;
+}
+function _tag(x,y,w,h,label){
+  const ls=label.split("‖"); const ly=y+h/2-(ls.length-1)*6;
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="var(--planacc)" stroke="var(--gold)" stroke-width="2"/>`+
+    `<text x="${x+w/2}" y="${ly}" font-size="9.5" fill="#8a6d2a" text-anchor="middle" dominant-baseline="middle" font-weight="bold">`+
+    ls.map((s,i)=>`<tspan x="${x+w/2}" dy="${i?12:0}">${s}</tspan>`).join("")+`</text>`;
+}
+const _wf=`<rect x="8" y="8" width="384" height="248" fill="none" stroke="var(--navy)" stroke-width="3"/>`;
+const PLANS = {
+ family:()=>`<svg viewBox="0 0 400 268" xmlns="http://www.w3.org/2000/svg">${_wf}
+  ${_room(20,20,226,124,"広いリビング・ダイニング")}
+  ${_tag(20,148,160,28,"対面カウンターキッチン")}
+  ${_room(184,148,62,28,"和室","var(--white)")}
+  ${_room(258,8,134,90,"主寝室")}
+  ${_room(258,98,67,72,"洋室")}${_room(325,98,67,72,"洋室")}
+  ${_room(8,180,180,76,"玄関ホール","var(--white)")}
+  ${_room(188,180,204,76,"水回り","var(--white)")}</svg>`,
+ privacy:()=>`<svg viewBox="0 0 400 268" xmlns="http://www.w3.org/2000/svg">${_wf}
+  ${_room(8,8,180,126,"リビング")}
+  ${_room(8,134,180,122,"ダイニング・キッチン")}
+  ${_room(188,8,60,248,"廊下","var(--white)")}
+  ${_tag(258,8,134,100,"独立書斎")}
+  ${_room(258,108,134,76,"主寝室")}
+  ${_room(258,184,134,72,"浴室","var(--white)")}</svg>`,
+ guest:()=>`<svg viewBox="0 0 400 268" xmlns="http://www.w3.org/2000/svg">${_wf}
+  ${_room(20,20,256,140,"広いLDK（来客スペース）")}
+  ${_tag(20,164,256,28,"アイランド型オープンキッチン")}
+  ${_room(288,8,104,108,"主寝室")}
+  ${_room(288,116,104,64,"洋室")}
+  ${_room(8,196,180,60,"玄関（来客動線）","var(--white)")}
+  ${_room(188,196,204,60,"水回り","var(--white)")}</svg>`,
+ func:()=>`<svg viewBox="0 0 400 268" xmlns="http://www.w3.org/2000/svg">${_wf}
+  ${_room(8,8,210,150,"リビング・ダイニング")}
+  ${_room(8,158,210,98,"キッチン","var(--white)")}
+  ${_tag(218,8,174,120,"洗面・浴室（水回り集約）")}
+  ${_tag(218,128,174,60,"大型ウォークインクローゼット")}
+  ${_room(218,188,90,68,"主寝室")}
+  ${_room(308,188,84,68,"洋室")}</svg>`,
+ hobby:()=>`<svg viewBox="0 0 400 268" xmlns="http://www.w3.org/2000/svg">${_wf}
+  ${_room(8,8,210,150,"リビング")}
+  ${_tag(8,158,210,98,"土間スペース（趣味・アトリエ）")}
+  ${_room(218,8,174,86,"オープンキッチン","var(--white)")}
+  ${_room(218,94,90,86,"主寝室")}
+  ${_tag(308,94,84,86,"見せる‖収納")}
+  ${_room(218,180,174,76,"水回り","var(--white)")}</svg>`,
+};
+
 
 /* ▼ 家族構成ごとの設問セット
    各構成: { ico, name, desc(選択画面の補足), note(結果への一言追記), questions[10] }
@@ -593,8 +653,8 @@ const HOUSEHOLDS = {
 <!-- ============================================================ -->
 
 <script>
-const data = {TYPES, RESULTS, HOUSEHOLDS, TASTES, IMG_DIR, IMG_EXT};
-const state = {hh:null, taste:null, answers:{}, restore:null};
+const data = {TYPES, RESULTS, HOUSEHOLDS, TASTES, IMG_DIR, IMG_EXT, PLANS};
+const state = {hh:null, building:null, taste:null, answers:{}, restore:null};
 const app = document.getElementById("app");
 const sub = document.getElementById("sub");
 
@@ -617,7 +677,33 @@ function renderSelect(){
 }
 
 function startHH(k){
-  state.hh=k; state.answers={}; state.taste=null;
+  state.hh=k; state.answers={}; state.taste=null; state.building=null;
+  renderBuilding();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---- 建物種別の選択画面 ---- */
+function renderBuilding(){
+  sub.innerHTML = data.HOUSEHOLDS[state.hh].name+"。次に、ご検討中の住まいのタイプを選んでください。";
+  const opts=[
+    {k:"man", ico:"🏢", nm:"マンション", de:"中古マンションのリノベ"},
+    {k:"ko",  ico:"🏠", nm:"戸建て",     de:"中古戸建てのリノベ"},
+  ];
+  let html=`<div class="card"><div class="qnum">STEP 2</div>
+    <div class="qtext">住まいのタイプは？</div><div class="hh-grid">`;
+  opts.forEach(o=>{
+    html+=`<div class="hh" onclick="startBuilding('${o.k}')">
+      <span class="ico">${o.ico}</span>
+      <div class="nm">${o.nm}</div><div class="de">${o.de}</div></div>`;
+  });
+  html+=`</div></div>
+    <div class="actions no-print">
+      <button class="btn btn-sub" style="flex:1" onclick="backToSelect()">家族構成を選び直す</button></div>`;
+  app.innerHTML=html;
+}
+
+function startBuilding(b){
+  state.building=b;
   renderTaste();
   window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -625,12 +711,11 @@ function startHH(k){
 /* ---- テイスト選択画面（写真付き） ---- */
 function renderTaste(){
   sub.innerHTML = data.HOUSEHOLDS[state.hh].name+"。次に、好みのインテリアの雰囲気を選んでください。";
-  let html=`<div class="card"><div class="qnum">STEP 2</div>
+  let html=`<div class="card"><div class="qnum">STEP 3</div>
     <div class="qtext">好みのテイストは？<span style="font-size:13px;font-weight:400;color:var(--ink-soft)">　ピンとくる写真を選んでください</span></div>
     <div class="taste-grid">`;
   for(const k in data.TASTES){
     const t=data.TASTES[k];
-    // 画像が無い場合は noimg クラスでグレー枠（onerrorで自動フォールバック）
     const src=data.IMG_DIR+t.key+"_main"+data.IMG_EXT;
     html+=`<div class="taste" onclick="startTaste('${k}')">
       <div class="ph noimg" style="background-image:url('${src}')"
@@ -640,9 +725,8 @@ function renderTaste(){
   }
   html+=`</div></div>
     <div class="actions no-print">
-      <button class="btn btn-sub" style="flex:1" onclick="backToSelect()">家族構成を選び直す</button></div>`;
+      <button class="btn btn-sub" style="flex:1" onclick="renderBuilding()">住まいのタイプを選び直す</button></div>`;
   app.innerHTML=html;
-  // 画像が実在すれば noimg を外して「イメージ写真」表記を消す
   document.querySelectorAll(".taste .ph").forEach(ph=>{
     const url=ph.style.backgroundImage.slice(5,-2);
     const im=new Image();
@@ -682,7 +766,7 @@ function renderQuiz(){
 }
 
 function backToSelect(){
-  state.hh=null; state.taste=null; state.answers={};
+  state.hh=null; state.building=null; state.taste=null; state.answers={};
   sub.innerHTML="まずはご家族の構成を選んでください。<br>構成に合わせた質問で、ぴったりのリノベ方針をご提案します。";
   renderSelect();
   window.scrollTo({top:0,behavior:"smooth"});
@@ -721,6 +805,19 @@ function showResult(){
   });
   let plan=""; R.plan.forEach(p=>plan+=`<li>${p}</li>`);
 
+  // 暮らしタイプ別の間取り（実画像。なければSVG図解にフォールバック）
+  let planSvg="";
+  const bld = state.building==="ko" ? "戸建て" : state.building==="man" ? "マンション" : "";
+  if(state.building){
+    const planSrc=data.IMG_DIR+topKey+"_"+state.building+data.IMG_EXT;
+    const fallback = data.PLANS[topKey] ? data.PLANS[topKey]() : "";
+    planSvg=`<div class="rcard"><h3>暮らし方の間取り事例
+        ${bld?`<span class="tastebadge">${bld}</span>`:""}</h3>
+      <div class="floorplan" data-plan="${planSrc}">${fallback}</div>
+      <p style="font-size:13px;color:var(--ink-soft);margin-top:12px">※ ${T.label}におすすめの間取り事例（${bld}）です。実際の間取りは物件やご要望に合わせてご提案します。</p>
+    </div>`;
+  }
+
   // テイスト参考写真
   const TS = data.TASTES[state.taste];
   let gallery="";
@@ -752,6 +849,7 @@ function showResult(){
     <div class="rcard"><h3>診断コメント</h3>
       <p>${R.desc}</p><p>${H.note}</p></div>
     <div class="rcard"><h3>おすすめのリノベ方針</h3><ul>${plan}</ul></div>
+    ${planSvg}
     ${gallery}
     <div class="rcard"><h3>あなたの暮らしバランス</h3><div class="scores">${bars}</div></div>
     <div class="rcard memo no-print"><h3>営業メモ</h3>
@@ -771,6 +869,14 @@ function showResult(){
     im.onload=()=>{el.style.backgroundImage=`url('${url}')`;el.textContent="";};
     im.src=url;
   });
+  // 間取り実画像があればSVG図解を置き換え、なければSVGのまま
+  const fp=document.querySelector(".floorplan[data-plan]");
+  if(fp){
+    const url=fp.getAttribute("data-plan");
+    const im=new Image();
+    im.onload=()=>{fp.innerHTML=`<img src="${url}" alt="間取り事例" style="width:100%;height:auto;display:block;border-radius:6px">`;};
+    im.src=url;
+  }
   state.restore=null;
   window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -784,7 +890,7 @@ function saveData(){
     app:"vivi-reno-shindan", version:1,
     savedAt:new Date().toISOString(),
     date:new Date().toLocaleDateString("ja-JP",{year:"numeric",month:"long",day:"numeric"}),
-    hh:state.hh, taste:state.taste, answers:state.answers,
+    hh:state.hh, building:state.building, taste:state.taste, answers:state.answers,
     cname, cprop, memo
   };
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
@@ -808,6 +914,7 @@ function loadData(e){
       if(d.app!=="vivi-reno-shindan"||!data.HOUSEHOLDS[d.hh])
         throw new Error("このツールの保存データではないようです。");
       state.hh=d.hh;
+      state.building=d.building||null;
       state.taste=d.taste||null;
       state.answers=d.answers||{};
       state.restore={cname:d.cname,cprop:d.cprop,memo:d.memo,date:d.date};
