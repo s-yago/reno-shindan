@@ -145,6 +145,20 @@ header .sub{margin-top:12px;color:var(--ink-soft);font-size:14px}
 .manual p{font-size:14px;color:var(--ink);margin:6px 0;line-height:1.8}
 .manual ol{margin:6px 0 6px 1.2em;font-size:14px;line-height:1.9}
 .manual b{color:var(--navy)}
+.genrow{background:#fbfaf7;border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px}
+.genrow-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.genrow-no{font-size:13px;font-weight:700;color:var(--gold);letter-spacing:.08em}
+.genx{border:none;background:#eee;color:#888;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:14px}
+.genx:hover{background:#e0a0a0;color:#fff}
+.genrow select{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;background:#fff}
+.genrow select:focus{outline:none;border-color:var(--navy)}
+.genitems{margin-top:10px;display:flex;flex-direction:column;gap:7px}
+.genitem{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;cursor:pointer;font-size:13.5px;background:#fff;transition:all .15s}
+.genitem.on{border-color:var(--navy);background:#f2f6fb}
+.genitem input{width:17px;height:17px;flex:0 0 auto}
+.genprompt{background:#fff;border:1px solid var(--gold-l);border-radius:10px;padding:14px;margin-top:12px}
+.genprompt-h{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.genprompt textarea{width:100%;min-height:120px;padding:11px;border:1.5px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;line-height:1.7;resize:vertical;background:#fbfaf7;color:var(--ink)}
 @media(max-width:480px){.gallery{grid-template-columns:1fr}}
 </style>
 </head>
@@ -191,6 +205,43 @@ const TASTES = {
   industrial: { name:"インダストリアル系", desc:"コンクリート・黒鉄・古材の男前", key:"industrial" },
   cafe:       { name:"カフェ／フレンチ系", desc:"白×アンティーク・タイル・可愛い", key:"cafe" },
 };
+
+/* ▼ Geminiプロンプト生成用データ */
+// 固定文（毎回プロンプトに自動で入る共通の注意書き）
+const PROMPT_FIXED = "アップロードした室内写真をベースに、リノベ後の完成イメージを生成してください。間取り・窓やドアの位置・部屋の広さは変えないでください。明るく自然光が入る仕上がりにしてください。実在する物件のリフォーム提案画像として、リアルで写真のような仕上がりにしてください（イラスト調にはしないでください）。";
+
+// テイストごとの内装描写（プロンプトに使う）
+const TASTE_PROMPT = {
+  natural:"内装はナチュラル系のテイストに。木の温もりを感じる優しい色合い、無垢材や明るい木目のフローリング、白やベージュを基調とした柔らかい雰囲気にしてください。",
+  nordic:"内装は北欧系のテイストに。白を基調とした明るくシンプルな空間、ナチュラルな木の質感、すっきりと洗練された北欧インテリアの雰囲気にしてください。",
+  hotel:"内装はホテルライク（モダン）系のテイストに。洗練された高級感、間接照明を効かせた落ち着いた配色、生活感を抑えたホテルのような上質な空間にしてください。",
+  wamodern:"内装は和モダン系のテイストに。和の落ち着きを感じる木と黒を基調とした配色、格子や畳の要素を取り入れた、現代的で上品な和の空間にしてください。",
+  industrial:"内装はインダストリアル系のテイストに。コンクリート調の壁、黒い鉄やアイアンの素材、古材を使った男前で無骨な雰囲気にしてください。",
+  cafe:"内装はカフェ／フレンチ系のテイストに。白を基調にアンティーク調の家具、タイルやレンガの要素を取り入れた、可愛らしく温かみのあるカフェのような空間にしてください。",
+};
+
+// 部位とそこで選べる御社の推しリノベ要素
+const RENO_PARTS = {
+  entrance:{ name:"玄関まわり", items:[
+    {k:"doma_shoe", t:"玄関横に土間収納（シューズクローク）を新設"},
+    {k:"doma_space", t:"玄関横に土間スペースを新設"},
+  ]},
+  kitchen:{ name:"キッチン", items:[
+    {k:"taimen", t:"対面式キッチンに変更"},
+    {k:"open", t:"オープンキッチンに変更"},
+    {k:"pantry", t:"キッチン横にパントリー（食品庫）を増設"},
+  ]},
+  living:{ name:"リビング", items:[
+    {k:"expand", t:"隣の部屋をつないでリビングを広げる"},
+    {k:"innerwindow", t:"壁に内窓を設けて隣室から採光する"},
+  ]},
+  room:{ name:"居室・寝室", items:[
+    {k:"wic", t:"大型ウォークインクローゼット（WIC）を新設"},
+    {k:"innerwindow", t:"暗くなりがちな壁に内窓を設けて採光する"},
+  ]},
+  other:{ name:"その他（テイスト変更のみ）", items:[] },
+};
+
 
 /* 結果文言（全構成共通の土台）。構成別の追記は HOUSEHOLDS の note で行う。 */
 const RESULTS = {
@@ -663,7 +714,7 @@ const HOUSEHOLDS = {
 <!-- ============================================================ -->
 
 <script>
-const data = {TYPES, RESULTS, HOUSEHOLDS, TASTES, IMG_DIR, IMG_EXT, PLANS};
+const data = {TYPES, RESULTS, HOUSEHOLDS, TASTES, IMG_DIR, IMG_EXT, PLANS, PROMPT_FIXED, TASTE_PROMPT, RENO_PARTS};
 const state = {hh:null, building:null, taste:null, answers:{}, restore:null};
 const app = document.getElementById("app");
 const sub = document.getElementById("sub");
@@ -704,6 +755,11 @@ const MANUAL_HTML = `
 <p><b>保存ファイルが見つからない</b>…パソコンの「ダウンロード」フォルダを確認してください。</p>
 <p><b>間違えて回答した</b>…タップし直せば選び直せます。「選び直す」ボタンで前に戻れます。</p>
 <p><b>最初からやり直したい</b>…結果画面の「最初から」ボタンを押してください。</p>
+
+<h3>リノベイメージの作り方（Gemini用プロンプト）</h3>
+<p>結果画面の「リノベイメージ生成（Gemini用プロンプト）」で、お客様にお見せするリノベ後イメージを作るための指示文（プロンプト）が作れます。</p>
+<p>使い方は、まず<b>部位</b>（玄関まわり・キッチン・リビング・居室など）を選び、行いたい<b>工事内容</b>（対面キッチンに変更、パントリー増設、大型WIC新設、内窓で採光 など）にチェックを入れます。すると、診断で選んだテイストも反映した指示文が自動で作られます。「このプロンプトをコピー」を押し、<b>Gemini</b>を開いて、購入予定の物件の室内写真と一緒に貼り付けると、リノベ後の完成イメージ画像ができます。</p>
+<p>「＋部位を追加」を押せば、キッチン用・リビング用など複数の指示文を同時に作れます。面談前の資料づくりにも、面談中にその場で見せるのにも使えます。</p>
 
 <h3>面談での使い方のヒント</h3>
 <p>タブレットでお客様に写真を見せながらテイストを選ぶと、入口でのワクワク感につながります。診断後は「お客様の回答詳細」を見ながら希望を確認し、提案を深めると効果的です。</p>
@@ -935,6 +991,16 @@ function showResult(){
     <div class="rcard memo no-print"><h3>営業メモ</h3>
       <label>ヒアリング内容・次回提案ポイントなど</label>
       <textarea id="memo" placeholder="例）予算◯◯万円、入居希望時期、気になっていた点 など">${r.memo||""}</textarea></div>
+    <div class="rcard genai no-print"><h3>リノベイメージ生成（Gemini用プロンプト）</h3>
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:14px">
+        どの部位の写真をリノベするか選び、行いたい工事をチェックすると、Geminiに貼り付けるプロンプトが作れます。
+        作ったプロンプトをコピーして、Geminiに物件写真と一緒に貼り付けてください。複数の部位を追加できます。</p>
+      <div id="genRows"></div>
+      <div class="actions" style="margin-top:6px">
+        <button class="btn btn-sub" style="flex:1" onclick="addGenRow()">＋ 部位を追加</button>
+      </div>
+      <div id="genOut"></div>
+    </div>
     <div class="rfoot"><div>ViVi不動産株式会社　中古×リノベーション</div>
       <div class="date">診断日：${r.date||today}</div></div>
     <div class="actions no-print" style="margin-top:18px">
@@ -958,7 +1024,101 @@ function showResult(){
     im.src=url;
   }
   state.restore=null;
+  genRows=[]; addGenRow();  // プロンプト生成の初期行
   window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---- Geminiプロンプト生成 ---- */
+let genRows=[];
+function addGenRow(){
+  genRows.push({part:"", items:[]});
+  renderGenRows();
+}
+function removeGenRow(i){
+  genRows.splice(i,1);
+  if(genRows.length===0) genRows.push({part:"",items:[]});
+  renderGenRows();
+}
+function setGenPart(i,part){
+  genRows[i].part=part; genRows[i].items=[];
+  renderGenRows();
+}
+function toggleGenItem(i,k){
+  const arr=genRows[i].items;
+  const idx=arr.indexOf(k);
+  if(idx>=0) arr.splice(idx,1); else arr.push(k);
+  renderGenRows();
+}
+function renderGenRows(){
+  const box=document.getElementById("genRows");
+  if(!box) return;
+  let html="";
+  genRows.forEach((row,i)=>{
+    html+=`<div class="genrow"><div class="genrow-head">
+      <span class="genrow-no">写真 ${i+1}</span>
+      ${genRows.length>1?`<button class="genx" onclick="removeGenRow(${i})">×</button>`:""}</div>
+      <select onchange="setGenPart(${i},this.value)">
+        <option value="">部位を選んでください</option>`;
+    for(const pk in data.RENO_PARTS){
+      html+=`<option value="${pk}" ${row.part===pk?"selected":""}>${data.RENO_PARTS[pk].name}</option>`;
+    }
+    html+=`</select>`;
+    if(row.part && data.RENO_PARTS[row.part].items.length){
+      html+=`<div class="genitems">`;
+      data.RENO_PARTS[row.part].items.forEach(it=>{
+        const on=row.items.includes(it.k);
+        html+=`<label class="genitem ${on?'on':''}">
+          <input type="checkbox" ${on?"checked":""} onchange="toggleGenItem(${i},'${it.k}')">
+          <span>${it.t}</span></label>`;
+      });
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+  });
+  box.innerHTML=html;
+  renderGenOut();
+}
+function buildPrompt(row){
+  const TS=data.TASTES[state.taste];
+  const tasteText = TS ? data.TASTE_PROMPT[state.taste] : "";
+  let work="";
+  if(row.part && row.part!=="other" && row.items.length){
+    const labels=row.items.map(k=>{
+      const it=data.RENO_PARTS[row.part].items.find(x=>x.k===k);
+      return it?it.t:"";
+    }).filter(Boolean);
+    work="次のリノベーションを施した状態にしてください：" + labels.join("、") + "。";
+  }
+  return [data.PROMPT_FIXED, work, tasteText].filter(Boolean).join(" ");
+}
+function renderGenOut(){
+  const out=document.getElementById("genOut");
+  if(!out) return;
+  let html="";
+  genRows.forEach((row,i)=>{
+    if(!row.part) return;
+    if(row.part!=="other" && row.items.length===0) return;
+    const txt=buildPrompt(row);
+    const pn=data.RENO_PARTS[row.part].name;
+    html+=`<div class="genprompt">
+      <div class="genprompt-h">写真 ${i+1}：${pn} 用プロンプト</div>
+      <textarea readonly id="gp${i}">${txt}</textarea>
+      <button class="btn btn-main" style="width:100%;margin-top:8px" onclick="copyPrompt(${i})">このプロンプトをコピー</button>
+    </div>`;
+  });
+  if(html==="") html=`<p style="font-size:13px;color:var(--ink-soft);margin-top:12px">部位を選び、工事内容にチェックを入れるとプロンプトが表示されます。</p>`;
+  out.innerHTML=html;
+}
+function copyPrompt(i){
+  const ta=document.getElementById("gp"+i);
+  if(!ta) return;
+  ta.select();
+  navigator.clipboard.writeText(ta.value).then(()=>{
+    alert("プロンプトをコピーしました。\nGeminiを開いて、物件写真と一緒に貼り付けてください。");
+  }).catch(()=>{
+    document.execCommand("copy");
+    alert("プロンプトをコピーしました。");
+  });
 }
 
 /* ---- データ保存（JSON書き出し） ---- */
