@@ -135,6 +135,16 @@ header .sub{margin-top:12px;color:var(--ink-soft);font-size:14px}
   border:1px solid var(--gold-l);border-radius:99px;padding:3px 12px;letter-spacing:.08em}
 .floorplan{background:#fbfaf7;border:1px solid var(--line);border-radius:10px;padding:12px}
 .floorplan svg{width:100%;height:auto;display:block}
+.sheet .ansmeta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:14px;font-size:13px;color:var(--ink-soft)}
+.sheet .ansmeta b{color:var(--navy)}
+.ansrow{padding:8px 0;border-bottom:1px dashed var(--line)}
+.ansrow:last-child{border-bottom:none}
+.ansq{font-size:13px;color:var(--ink-soft)}
+.ansa{font-size:14px;color:var(--ink);font-weight:600;margin-top:2px}
+.manual h3{font-size:15px;color:var(--gold);font-weight:700;margin:20px 0 6px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.manual p{font-size:14px;color:var(--ink);margin:6px 0;line-height:1.8}
+.manual ol{margin:6px 0 6px 1.2em;font-size:14px;line-height:1.9}
+.manual b{color:var(--navy)}
 @media(max-width:480px){.gallery{grid-template-columns:1fr}}
 </style>
 </head>
@@ -659,6 +669,54 @@ const app = document.getElementById("app");
 const sub = document.getElementById("sub");
 
 /* ---- 家族構成の選択画面 ---- */
+/* ---- 使い方マニュアル ---- */
+const MANUAL_HTML = `
+<h2 style="color:var(--navy);font-size:20px;margin:0 0 4px">使い方マニュアル</h2>
+<p style="color:var(--ink-soft);font-size:13px;margin-bottom:18px">リノベ好み診断書ツール</p>
+
+<h3>このツールでできること</h3>
+<p>お客様に10の質問へ答えてもらい、その方に合った「暮らしタイプ」を診断します。おすすめのリノベ方針・間取り事例・テイスト写真を提案でき、結果は印刷・PDF保存・データ保存ができます。</p>
+
+<h3>診断の流れ</h3>
+<ol>
+<li><b>家族構成を選ぶ</b>（DINKS夫婦、家族3人、二世帯 など）</li>
+<li><b>住まいのタイプを選ぶ</b>（マンション／戸建て。結果の間取り事例が変わります）</li>
+<li><b>好みのテイストを選ぶ</b>（写真を見てピンとくる雰囲気を選択）</li>
+<li><b>10の質問に答える</b>（タップするだけ）</li>
+<li><b>診断結果を見る</b></li>
+</ol>
+<p>途中で「選び直す」ボタンを押すと前のステップに戻れます。</p>
+
+<h3>診断結果でできること</h3>
+<p>暮らしタイプ、診断コメント、おすすめのリノベ方針、間取り事例、テイスト写真、暮らしバランス、そして<b>お客様の回答詳細（スタッフ確認用）</b>と<b>営業メモ</b>が表示されます。</p>
+<p>「お客様の回答詳細」は、お客様が10問それぞれで何を選んだかの一覧です。診断タイプだけでは見えない具体的な希望が分かります。印刷・PDFにも含まれます。</p>
+
+<h3>印刷・PDF保存</h3>
+<p>結果画面の「印刷・PDF」ボタンを押すと印刷画面が開きます。紙に印刷してお渡しするか、送信先を「PDFに保存」に変えるとPDFファイルとして残せます。操作ボタンや入力欄は印刷には出ません。</p>
+
+<h3>データの保存と読み込み（引き継ぎ）</h3>
+<p><b>保存：</b>結果画面の「データ保存」ボタンを押すと、「リノベ診断_お客様名_日付.json」というファイルがパソコンのダウンロードフォルダに保存されます。社内の共有フォルダに置けば、お客様ごとの診断カルテになります。</p>
+<p><b>読み込み：</b>最初の画面の「保存データを読み込む」ボタンから、保存した.jsonファイルを選ぶと、回答・結果・メモがそのまま復元されます。担当者が変わっても引き継げます。</p>
+<p style="font-size:13px;color:var(--ink-soft)">※ 残金決済ツールと同じJSON方式です。.jsonファイルは直接開かず、このツールの「読み込む」から開いてください。</p>
+
+<h3>よくある質問</h3>
+<p><b>写真や間取りが出ない</b>…少し待って画面を再読み込みしてください。</p>
+<p><b>保存ファイルが見つからない</b>…パソコンの「ダウンロード」フォルダを確認してください。</p>
+<p><b>間違えて回答した</b>…タップし直せば選び直せます。「選び直す」ボタンで前に戻れます。</p>
+<p><b>最初からやり直したい</b>…結果画面の「最初から」ボタンを押してください。</p>
+
+<h3>面談での使い方のヒント</h3>
+<p>タブレットでお客様に写真を見せながらテイストを選ぶと、入口でのワクワク感につながります。診断後は「お客様の回答詳細」を見ながら希望を確認し、提案を深めると効果的です。</p>
+`;
+
+function showManual(){
+  app.innerHTML=`<div class="card manual">${MANUAL_HTML}
+    <div class="actions no-print" style="margin-top:20px">
+      <button class="btn btn-main" style="flex:1" onclick="backToSelect()">閉じる</button></div>
+  </div>`;
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
 function renderSelect(){
   let html = `<div class="card"><div class="qnum">STEP 1</div>
     <div class="qtext">ご家族の構成を選んでください</div><div class="hh-grid">`;
@@ -670,6 +728,7 @@ function renderSelect(){
   }
   html+=`</div></div>`;
   html+=`<div class="actions no-print">
+    <button class="btn btn-sub" style="flex:1" onclick="showManual()">使い方マニュアル</button>
     <button class="btn btn-sub" style="flex:1" onclick="document.getElementById('loadFile').click()">
       保存データを読み込む</button></div>
     <input type="file" id="loadFile" accept=".json,application/json" style="display:none" onchange="loadData(event)">`;
@@ -805,6 +864,26 @@ function showResult(){
   });
   let plan=""; R.plan.forEach(p=>plan+=`<li>${p}</li>`);
 
+  // ▼ スタッフ向け：お客様の回答詳細一覧
+  const TSx = data.TASTES[state.taste];
+  const bldName = state.building==="ko" ? "戸建て" : state.building==="man" ? "マンション" : "未選択";
+  let ansRows="";
+  data.HOUSEHOLDS[state.hh].questions.forEach((q,i)=>{
+    const sel=q.opts[state.answers[i]];
+    ansRows+=`<div class="ansrow">
+      <div class="ansq">Q${i+1}. ${q.q}</div>
+      <div class="ansa">→ ${sel?sel.t:"（未回答）"}</div></div>`;
+  });
+  const answerSheet=`<div class="rcard sheet"><h3>お客様の回答詳細（スタッフ確認用）</h3>
+    <div class="ansmeta">
+      <span>家族構成：<b>${H.name}</b></span>
+      <span>住まい：<b>${bldName}</b></span>
+      <span>好みテイスト：<b>${TSx?TSx.name:"未選択"}</b></span>
+      <span>診断タイプ：<b>${T.label}</b></span>
+    </div>
+    ${ansRows}
+  </div>`;
+
   // 暮らしタイプ別の間取り（実画像。なければSVG図解にフォールバック）
   let planSvg="";
   const bld = state.building==="ko" ? "戸建て" : state.building==="man" ? "マンション" : "";
@@ -852,6 +931,7 @@ function showResult(){
     ${planSvg}
     ${gallery}
     <div class="rcard"><h3>あなたの暮らしバランス</h3><div class="scores">${bars}</div></div>
+    ${answerSheet}
     <div class="rcard memo no-print"><h3>営業メモ</h3>
       <label>ヒアリング内容・次回提案ポイントなど</label>
       <textarea id="memo" placeholder="例）予算◯◯万円、入居希望時期、気になっていた点 など">${r.memo||""}</textarea></div>
@@ -901,6 +981,7 @@ function saveData(){
   a.href=url; a.download=`リノベ診断_${safe}_${stamp}.json`;
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
+  alert("診断データを保存しました。\n\nファイル名：リノベ診断_"+(cname||"診断")+"_"+stamp+".json\n（パソコンのダウンロードフォルダに入ります）\n\n別のスタッフと共有するときは、このファイルを渡してください。\n最初の画面の「保存データを読み込む」から開けます。");
 }
 
 /* ---- データ読み込み（JSON復元） ---- */
