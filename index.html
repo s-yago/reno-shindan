@@ -153,10 +153,17 @@ header .sub{margin-top:12px;color:var(--ink-soft);font-size:14px}
 .rfoot .date{margin-top:4px}
 
 @media print{
+  /* 背景画像（参考イメージ等）を印刷する */
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
   body{background:#fff}.wrap{max-width:100%;padding:0}
   .no-print{display:none!important}
-  .rcard,.card{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+  .rcard,.card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;page-break-inside:avoid}
   header{padding:10px 0}.progress,.pcount{display:none}
+  /* 画像・間取りがページ途中で分断されないように */
+  .gallery,.floorplan,.gallery figure,.gallery .img,.two-results,.person-card,.pain-result,.pain-item{
+    break-inside:avoid;page-break-inside:avoid}
+  .gallery .img{aspect-ratio:auto;min-height:150px}
+  .rcard h3{break-after:avoid;page-break-after:avoid}
 }
 @media(max-width:480px){
   header h1{font-size:21px}.rtype{font-size:26px}
@@ -180,8 +187,10 @@ header .sub{margin-top:12px;color:var(--ink-soft);font-size:14px}
 /* 結果の参考写真 */
 .gallery{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .gallery figure{margin:0;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
-.gallery .img{width:100%;aspect-ratio:4/3;background:#ece6da;display:flex;align-items:center;justify-content:center;
-  color:#a99e88;font-size:12px;background-size:cover;background-position:center}
+.gallery .img{position:relative;width:100%;aspect-ratio:4/3;background:#ece6da;display:flex;align-items:center;justify-content:center;
+  color:#a99e88;font-size:12px;overflow:hidden}
+.gallery .img.hasimg{background:none}
+.gallery .img img{width:100%;height:100%;object-fit:cover;display:block}
 .gallery figcaption{font-size:12px;color:var(--ink-soft);text-align:center;padding:7px 0;background:#faf8f3}
 .tastebadge{display:inline-block;margin-left:6px;font-size:12px;color:var(--gold);
   border:1px solid var(--gold-l);border-radius:99px;padding:3px 12px;letter-spacing:.08em}
@@ -1296,13 +1305,13 @@ function showResult(){
       <button class="btn btn-main" onclick="saveData()">データ保存</button>
       <button class="btn btn-main" onclick="window.print()">印刷・PDF</button></div>
   </div>`;
-  // 画像が実在すれば背景に差し込み（無ければ「イメージ写真」のまま）。読み込めたらタップで拡大。
+  // 参考イメージ：実画像があれば<img>で差し込み（印刷・PDFでも確実に出る）。無ければ枠のまま。
   document.querySelectorAll(".gallery .img").forEach(el=>{
     const url=el.getAttribute("data-src");
     const im=new Image();
     im.onload=()=>{
-      el.style.backgroundImage=`url('${url}')`;el.textContent="";
-      el.classList.add("zoomable");
+      el.innerHTML=`<img src="${url}" alt="参考イメージ" style="width:100%;height:100%;object-fit:cover;display:block">`;
+      el.classList.add("hasimg","zoomable");
       el.onclick=()=>openLightbox(url);
     };
     im.src=url;
