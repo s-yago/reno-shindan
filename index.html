@@ -159,6 +159,17 @@ header .sub{margin-top:12px;color:var(--ink-soft);font-size:14px}
 .genprompt{background:#fff;border:1px solid var(--gold-l);border-radius:10px;padding:14px;margin-top:12px}
 .genprompt-h{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px}
 .genprompt textarea{width:100%;min-height:120px;padding:11px;border:1.5px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;line-height:1.7;resize:vertical;background:#fbfaf7;color:var(--ink)}
+/* 画像拡大（ライトボックス） */
+.lightbox{display:none;position:fixed;inset:0;z-index:9999;background:rgba(20,40,64,.92);
+  align-items:center;justify-content:center;padding:20px;cursor:zoom-out}
+.lightbox.on{display:flex}
+.lightbox img{max-width:100%;max-height:92vh;border-radius:8px;box-shadow:0 10px 50px rgba(0,0,0,.5)}
+.lb-close{position:fixed;top:16px;right:18px;width:44px;height:44px;border:none;border-radius:50%;
+  background:rgba(255,255,255,.9);color:var(--navy);font-size:26px;cursor:pointer;line-height:1;z-index:10000}
+.lb-close:hover{background:#fff}
+.zoomable{cursor:zoom-in}
+.floorplan.zoomable:hover,.gallery .img.zoomable:hover{opacity:.92}
+.zoomhint{font-size:11px;color:var(--ink-soft);text-align:center;margin-top:6px}
 @media(max-width:480px){.gallery{grid-template-columns:1fr}}
 </style>
 </head>
@@ -175,6 +186,12 @@ header .sub{margin-top:12px;color:var(--ink-soft);font-size:14px}
     <div class="sub" id="sub">まずはご家族の構成を選んでください。<br>構成に合わせた質問で、ぴったりのリノベ方針をご提案します。</div>
   </header>
   <div id="app"></div>
+</div>
+
+<!-- 画像拡大表示用オーバーレイ -->
+<div id="lightbox" class="lightbox" onclick="closeLightbox()">
+  <button class="lb-close" onclick="closeLightbox()">×</button>
+  <img id="lightbox-img" src="" alt="拡大表示">
 </div>
 
 <!-- ============================================================
@@ -720,6 +737,19 @@ const app = document.getElementById("app");
 const sub = document.getElementById("sub");
 
 /* ---- 家族構成の選択画面 ---- */
+/* ---- 画像拡大（ライトボックス） ---- */
+function openLightbox(src){
+  const lb=document.getElementById("lightbox");
+  const img=document.getElementById("lightbox-img");
+  if(!lb||!img||!src) return;
+  img.src=src;
+  lb.classList.add("on");
+}
+function closeLightbox(){
+  const lb=document.getElementById("lightbox");
+  if(lb) lb.classList.remove("on");
+}
+
 /* ---- 使い方マニュアル ---- */
 const MANUAL_HTML = `
 <h2 style="color:var(--navy);font-size:20px;margin:0 0 4px">使い方マニュアル</h2>
@@ -741,6 +771,7 @@ const MANUAL_HTML = `
 <h3>診断結果でできること</h3>
 <p>暮らしタイプ、診断コメント、おすすめのリノベ方針、間取り事例、テイスト写真、暮らしバランス、そして<b>お客様の回答詳細（スタッフ確認用）</b>と<b>営業メモ</b>が表示されます。</p>
 <p>「お客様の回答詳細」は、お客様が10問それぞれで何を選んだかの一覧です。診断タイプだけでは見えない具体的な希望が分かります。印刷・PDFにも含まれます。</p>
+<p>結果に出る<b>間取り事例やテイスト写真は、タップ（クリック）すると拡大表示</b>されます。細部を見たいときや、お客様に大きく見せたいときに使えます。拡大表示は「×」または背景をタップで閉じます。</p>
 
 <h3>印刷・PDF保存</h3>
 <p>結果画面の「印刷・PDF」ボタンを押すと印刷画面が開きます。紙に印刷してお渡しするか、送信先を「PDFに保存」に変えるとPDFファイルとして残せます。操作ボタンや入力欄は印刷には出ません。</p>
@@ -949,7 +980,7 @@ function showResult(){
     planSvg=`<div class="rcard"><h3>暮らし方の間取り事例
         ${bld?`<span class="tastebadge">${bld}</span>`:""}</h3>
       <div class="floorplan" data-plan="${planSrc}">${fallback}</div>
-      <p style="font-size:13px;color:var(--ink-soft);margin-top:12px">※ ${T.label}におすすめの間取り事例（${bld}）です。実際の間取りは物件やご要望に合わせてご提案します。</p>
+      <p style="font-size:13px;color:var(--ink-soft);margin-top:12px">※ ${T.label}におすすめの間取り事例（${bld}）です。実際の間取りは物件やご要望に合わせてご提案します。<br>画像をタップすると拡大できます。</p>
     </div>`;
   }
 
@@ -965,7 +996,7 @@ function showResult(){
         <figure><div class="img" data-src="${lSrc}">イメージ写真</div><figcaption>リビング</figcaption></figure>
         <figure><div class="img" data-src="${kSrc}">イメージ写真</div><figcaption>キッチン</figcaption></figure>
       </div>
-      <p style="font-size:13px;color:var(--ink-soft);margin-top:12px">※ ${TS.name}の参考イメージです。実際の施工事例は担当者がご案内します。</p>
+      <p style="font-size:13px;color:var(--ink-soft);margin-top:12px">※ ${TS.name}の参考イメージです。実際の施工事例は担当者がご案内します。<br>画像をタップすると拡大できます。</p>
     </div>`;
   }
 
@@ -1008,19 +1039,27 @@ function showResult(){
       <button class="btn btn-main" onclick="saveData()">データ保存</button>
       <button class="btn btn-main" onclick="window.print()">印刷・PDF</button></div>
   </div>`;
-  // 画像が実在すれば背景に差し込み（無ければ「イメージ写真」のまま）
+  // 画像が実在すれば背景に差し込み（無ければ「イメージ写真」のまま）。読み込めたらタップで拡大。
   document.querySelectorAll(".gallery .img").forEach(el=>{
     const url=el.getAttribute("data-src");
     const im=new Image();
-    im.onload=()=>{el.style.backgroundImage=`url('${url}')`;el.textContent="";};
+    im.onload=()=>{
+      el.style.backgroundImage=`url('${url}')`;el.textContent="";
+      el.classList.add("zoomable");
+      el.onclick=()=>openLightbox(url);
+    };
     im.src=url;
   });
-  // 間取り実画像があればSVG図解を置き換え、なければSVGのまま
+  // 間取り実画像があればSVG図解を置き換え、なければSVGのまま。読み込めたらタップで拡大。
   const fp=document.querySelector(".floorplan[data-plan]");
   if(fp){
     const url=fp.getAttribute("data-plan");
     const im=new Image();
-    im.onload=()=>{fp.innerHTML=`<img src="${url}" alt="間取り事例" style="width:100%;height:auto;display:block;border-radius:6px">`;};
+    im.onload=()=>{
+      fp.innerHTML=`<img src="${url}" alt="間取り事例" style="width:100%;height:auto;display:block;border-radius:6px">`;
+      fp.classList.add("zoomable");
+      fp.onclick=()=>openLightbox(url);
+    };
     im.src=url;
   }
   state.restore=null;
