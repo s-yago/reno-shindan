@@ -47,6 +47,58 @@ header .sub{margin-top:12px;color:var(--ink-soft);font-size:14px}
 .opt .dot{flex:0 0 20px;height:20px;border-radius:50%;border:2px solid var(--line);transition:all .18s}
 .opt.sel .dot{border-color:var(--navy);background:var(--navy);box-shadow:inset 0 0 0 3px #fff}
 
+/* A/B 2人同時回答 */
+.abopt{display:flex;align-items:stretch;gap:8px;border:1.5px solid var(--line);border-radius:12px;
+  background:#fff;transition:all .18s ease;overflow:hidden}
+.abopt:hover{border-color:var(--gold-l)}
+.abopt .label{flex:1;display:flex;align-items:center;padding:13px 15px;font-size:14.5px;line-height:1.45}
+.abopt .abpick{flex:0 0 auto;display:flex}
+.abtag{flex:0 0 46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  border-left:1.5px solid var(--line);cursor:pointer;font-size:12px;font-weight:700;color:var(--ink-soft);
+  transition:all .15s;user-select:none}
+.abtag small{font-size:10px;font-weight:600;opacity:.7}
+.abtag:hover{background:#fdfaf3}
+.abtag.onA{background:var(--navy);color:#fff;border-color:var(--navy)}
+.abtag.onB{background:var(--gold);color:#fff;border-color:var(--gold)}
+.abtag.solo{flex-basis:70px}
+.ab-head{display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px}
+.ab-head .chip{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px}
+.ab-head .chipA{background:var(--navy);color:#fff}
+.ab-head .chipB{background:var(--gold);color:#fff}
+
+/* ペイン設問（複数選択チップ） */
+.pains{display:flex;flex-direction:column;gap:9px}
+.painrow{display:flex;align-items:stretch;gap:8px;border:1.5px solid var(--line);border-radius:12px;
+  background:#fff;overflow:hidden;transition:all .18s}
+.painrow .label{flex:1;display:flex;align-items:center;padding:12px 15px;font-size:14.5px;line-height:1.4}
+.painrow .ppick{flex:0 0 auto;display:flex}
+.ptag{flex:0 0 46px;display:flex;align-items:center;justify-content:center;border-left:1.5px solid var(--line);
+  cursor:pointer;font-size:12px;font-weight:700;color:var(--ink-soft);transition:all .15s;user-select:none}
+.ptag.onA{background:var(--navy);color:#fff;border-color:var(--navy)}
+.ptag.onB{background:var(--gold);color:#fff;border-color:var(--gold)}
+.ptag.solo{flex-basis:70px}
+.pain-note{font-size:12.5px;color:var(--ink-soft);margin:4px 0 12px}
+
+/* 結果：A・B 2果並べ */
+.two-results{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px}
+@media(max-width:560px){.two-results{grid-template-columns:1fr}}
+.person-card{border:1.5px solid var(--line);border-radius:14px;padding:18px 16px;background:#fff}
+.person-card.A{border-top:4px solid var(--navy)}
+.person-card.B{border-top:4px solid var(--gold)}
+.person-card .who{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--ink-soft);margin-bottom:4px}
+.person-card .ptype{font-size:18px;font-weight:800;color:var(--navy);margin-bottom:10px}
+
+/* 優先解決ペイン（別軸） */
+.pain-result{display:flex;flex-direction:column;gap:8px}
+.pain-item{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--line);
+  border-radius:10px;background:#faf8f3}
+.pain-item .pl{flex:1;font-size:14px}
+.pain-item .who-badge{flex:0 0 auto;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px}
+.pain-item .sol{flex:0 0 auto;font-size:12px;color:var(--gold);font-weight:700}
+.whoA{background:var(--navy);color:#fff}
+.whoB{background:var(--gold);color:#fff}
+.whoAB{background:linear-gradient(90deg,var(--navy) 50%,var(--gold) 50%);color:#fff}
+
 /* 家族構成の選択（最初の画面） */
 .hh-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .hh{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:22px 16px;cursor:pointer;
@@ -370,10 +422,10 @@ const HOUSEHOLDS = {
         {t:"生活感を見せない隠す収納",points:{guest:2,func:1}},
         {t:"趣味の道具を飾れる収納",points:{hobby:2}}]},
       {q:"内装の好みは？",opts:[
-        {t:"温かみのあるナチュラルな質感",points:{family:2,hobby:1}},
-        {t:"静かで上質な落ち着き",points:{privacy:2}},
-        {t:"ホテルのような洗練",points:{guest:2}},
-        {t:"手入れが楽でシンプル",points:{func:2}}]},
+        {t:"木の温もりを感じてホッとくつろぎたい",points:{family:2,hobby:1}},
+        {t:"静けさの中で自分の時間に浸りたい",points:{privacy:2}},
+        {t:"帰るたびに気分が上がる特別感がほしい",points:{guest:2}},
+        {t:"余計な物のないスッキリした心地よさがほしい",points:{func:2}}]},
       {q:"水回りで重視するのは？",opts:[
         {t:"二人で使いやすい広さ",points:{family:2,func:1}},
         {t:"ゆっくり浸れる癒しの浴室",points:{privacy:2}},
@@ -384,11 +436,17 @@ const HOUSEHOLDS = {
         {t:"二人それぞれの時間を保てる住まい",points:{privacy:2}},
         {t:"いつでも人を招ける家",points:{guest:2}},
         {t:"長く快適に暮らせる手のかからない家",points:{func:2}}]},
-      {q:"リノベで一番ワクワクするのは？",opts:[
-        {t:"二人で寛げる理想のリビング",points:{family:2}},
-        {t:"自分だけの落ち着ける場所",points:{privacy:2}},
-        {t:"人を呼びたくなる素敵な空間",points:{guest:2}},
-        {t:"毎日の暮らしが楽になること",points:{func:2}}]},
+            {q:"今の住まいで、ストレスや不満を感じるのは？（当てはまるものすべて／複数選択可）",pain:true,opts:[
+        {t:"冬は寒い・夏は暑い、結露がつらい",sol:"断熱・内窓・床暖房"},
+        {t:"収納が足りず物があふれる",sol:"造作収納・ウォークイン"},
+        {t:"家事の動線が悪く時間がかかる",sol:"回遊動線・水回り集約"},
+        {t:"家族の気配が常にあり、ひとりになれない",sol:"個室・書斎・間仕切り"},
+        {t:"家族とのすれ違いが多く会話が減った",sol:"LDK集約・対面キッチン"},
+        {t:"人を気軽に呼べる家ではない",sol:"玄関・LDK開放、見せる空間"},
+        {t:"趣味や仕事のスペースがない",sol:"ワークスペース・土間・趣味室"},
+        {t:"内装が古く気分が上がらない",sol:"内装一新・テイスト統一"},
+        {t:"水回りが古い・使いにくい",sol:"水回り刷新パック"},
+        {t:"部屋数や間取りが暮らしに合っていない",sol:"間取り変更・LDK拡張"}]},
       {q:"あえて選ぶなら、譲れないのは？",opts:[
         {t:"広いリビング",points:{family:2,guest:1}},
         {t:"自分専用の部屋・書斎",points:{privacy:2}},
@@ -425,10 +483,10 @@ const HOUSEHOLDS = {
         {t:"見せない美しい収納",points:{guest:2,func:1}},
         {t:"おもちゃ・趣味を飾れる収納",points:{hobby:2}}]},
       {q:"内装の好みは？",opts:[
-        {t:"温かみのあるナチュラルな木の質感",points:{family:2,hobby:1}},
-        {t:"落ち着いた上質な空間",points:{privacy:2}},
-        {t:"ホテルのような洗練",points:{guest:2}},
-        {t:"汚れにくく手入れが楽な素材",points:{func:2}}]},
+        {t:"木の温もりを感じてホッとくつろぎたい",points:{family:2,hobby:1}},
+        {t:"静けさの中で自分の時間に浸りたい",points:{privacy:2}},
+        {t:"帰るたびに気分が上がる特別感がほしい",points:{guest:2}},
+        {t:"余計な物のないスッキリした心地よさがほしい",points:{func:2}}]},
       {q:"水回りで重視するのは？",opts:[
         {t:"家族が使いやすい広さ・配置",points:{family:2,func:1}},
         {t:"ゆっくり浸れる癒しの空間",points:{privacy:2}},
@@ -439,11 +497,17 @@ const HOUSEHOLDS = {
         {t:"親も自分の時間を持てる住まい",points:{privacy:2}},
         {t:"いつでも人を招ける家",points:{guest:2}},
         {t:"家事がラクで暮らしやすい家",points:{func:2}}]},
-      {q:"リノベで一番ワクワクするのは？",opts:[
-        {t:"家族が笑顔で集まる風景",points:{family:2}},
-        {t:"自分だけの落ち着ける場所",points:{privacy:2}},
-        {t:"人を呼びたくなる素敵な空間",points:{guest:2}},
-        {t:"毎日の暮らしが楽になること",points:{func:2}}]},
+            {q:"今の住まいで、ストレスや不満を感じるのは？（当てはまるものすべて／複数選択可）",pain:true,opts:[
+        {t:"冬は寒い・夏は暑い、結露がつらい",sol:"断熱・内窓・床暖房"},
+        {t:"収納が足りず物があふれる",sol:"造作収納・ウォークイン"},
+        {t:"家事の動線が悪く時間がかかる",sol:"回遊動線・水回り集約"},
+        {t:"家族の気配が常にあり、ひとりになれない",sol:"個室・書斎・間仕切り"},
+        {t:"家族とのすれ違いが多く会話が減った",sol:"LDK集約・対面キッチン"},
+        {t:"人を気軽に呼べる家ではない",sol:"玄関・LDK開放、見せる空間"},
+        {t:"趣味や仕事のスペースがない",sol:"ワークスペース・土間・趣味室"},
+        {t:"内装が古く気分が上がらない",sol:"内装一新・テイスト統一"},
+        {t:"水回りが古い・使いにくい",sol:"水回り刷新パック"},
+        {t:"部屋数や間取りが暮らしに合っていない",sol:"間取り変更・LDK拡張"}]},
       {q:"あえて選ぶなら、譲れないのは？",opts:[
         {t:"広いリビング",points:{family:2,guest:1}},
         {t:"自分・子の個室",points:{privacy:2}},
@@ -480,10 +544,10 @@ const HOUSEHOLDS = {
         {t:"収納と動線重視で生活感を抑える",points:{func:2,guest:1}},
         {t:"趣味・多目的スペースを確保",points:{hobby:2}}]},
       {q:"内装の好みは？",opts:[
-        {t:"温かみのあるナチュラルな質感",points:{family:2,hobby:1}},
-        {t:"落ち着いた上質な空間",points:{privacy:2}},
-        {t:"ホテルのような洗練",points:{guest:2}},
-        {t:"汚れにくく丈夫で手入れが楽",points:{func:2}}]},
+        {t:"木の温もりを感じてホッとくつろぎたい",points:{family:2,hobby:1}},
+        {t:"静けさの中で自分の時間に浸りたい",points:{privacy:2}},
+        {t:"帰るたびに気分が上がる特別感がほしい",points:{guest:2}},
+        {t:"余計な物のないスッキリした心地よさがほしい",points:{func:2}}]},
       {q:"水回りで重視するのは？",opts:[
         {t:"朝も混まない広さ・2ボウルなど",points:{family:2,func:1}},
         {t:"ゆっくり浸れる癒しの浴室",points:{privacy:2}},
@@ -494,11 +558,17 @@ const HOUSEHOLDS = {
         {t:"一人で静かに片付けたい",points:{privacy:1,func:1}},
         {t:"見える場所は常にきれいに",points:{guest:2}},
         {t:"とにかく時短・効率重視",points:{func:2}}]},
-      {q:"リノベで一番ワクワクするのは？",opts:[
-        {t:"家族みんなが集まる風景",points:{family:2}},
-        {t:"自分の落ち着ける場所",points:{privacy:2}},
-        {t:"人を呼びたくなる空間",points:{guest:2}},
-        {t:"毎日の家事・暮らしが楽になること",points:{func:2}}]},
+            {q:"今の住まいで、ストレスや不満を感じるのは？（当てはまるものすべて／複数選択可）",pain:true,opts:[
+        {t:"冬は寒い・夏は暑い、結露がつらい",sol:"断熱・内窓・床暖房"},
+        {t:"収納が足りず物があふれる",sol:"造作収納・ウォークイン"},
+        {t:"家事の動線が悪く時間がかかる",sol:"回遊動線・水回り集約"},
+        {t:"家族の気配が常にあり、ひとりになれない",sol:"個室・書斎・間仕切り"},
+        {t:"家族とのすれ違いが多く会話が減った",sol:"LDK集約・対面キッチン"},
+        {t:"人を気軽に呼べる家ではない",sol:"玄関・LDK開放、見せる空間"},
+        {t:"趣味や仕事のスペースがない",sol:"ワークスペース・土間・趣味室"},
+        {t:"内装が古く気分が上がらない",sol:"内装一新・テイスト統一"},
+        {t:"水回りが古い・使いにくい",sol:"水回り刷新パック"},
+        {t:"部屋数や間取りが暮らしに合っていない",sol:"間取り変更・LDK拡張"}]},
       {q:"あえて選ぶなら、譲れないのは？",opts:[
         {t:"広いリビング・ダイニング",points:{family:2,guest:1}},
         {t:"人数分の個室",points:{privacy:2}},
@@ -535,10 +605,10 @@ const HOUSEHOLDS = {
         {t:"見せない美しい収納",points:{guest:2,func:1}},
         {t:"趣味の物を飾れる収納",points:{hobby:2}}]},
       {q:"内装の好みは？",opts:[
-        {t:"温かみのあるナチュラルな質感",points:{family:2,hobby:1}},
-        {t:"落ち着いた上質な空間",points:{privacy:2}},
-        {t:"ホテルのような洗練",points:{guest:2}},
-        {t:"手入れが楽でバリアフリー配慮",points:{func:2}}]},
+        {t:"木の温もりを感じてホッとくつろぎたい",points:{family:2,hobby:1}},
+        {t:"静けさの中で自分の時間に浸りたい",points:{privacy:2}},
+        {t:"帰るたびに気分が上がる特別感がほしい",points:{guest:2}},
+        {t:"段差や不安のない、安心できる住み心地がほしい",points:{func:2}}]},
       {q:"将来（親の高齢化など）で意識したいのは？",opts:[
         {t:"いつでも支え合える近さ",points:{family:2}},
         {t:"互いに干渉しすぎない距離",points:{privacy:2}},
@@ -549,11 +619,17 @@ const HOUSEHOLDS = {
         {t:"防音・遮音をしっかりしたい",points:{privacy:2}},
         {t:"来客時に生活音が気にならない設計",points:{guest:2}},
         {t:"水回りの配置で音問題を解決",points:{func:2}}]},
-      {q:"リノベで一番ワクワクするのは？",opts:[
-        {t:"家族が自然と集まる風景",points:{family:2}},
-        {t:"それぞれが落ち着ける住まい",points:{privacy:2}},
-        {t:"人を呼びたくなる空間",points:{guest:2}},
-        {t:"みんなの暮らしが楽になること",points:{func:2}}]},
+            {q:"今の住まいで、ストレスや不満を感じるのは？（当てはまるものすべて／複数選択可）",pain:true,opts:[
+        {t:"冬は寒い・夏は暑い、結露がつらい",sol:"断熱・内窓・床暖房"},
+        {t:"収納が足りず物があふれる",sol:"造作収納・ウォークイン"},
+        {t:"家事の動線が悪く時間がかかる",sol:"回遊動線・水回り集約"},
+        {t:"家族の気配が常にあり、ひとりになれない",sol:"個室・書斎・間仕切り"},
+        {t:"家族とのすれ違いが多く会話が減った",sol:"LDK集約・対面キッチン"},
+        {t:"人を気軽に呼べる家ではない",sol:"玄関・LDK開放、見せる空間"},
+        {t:"趣味や仕事のスペースがない",sol:"ワークスペース・土間・趣味室"},
+        {t:"内装が古く気分が上がらない",sol:"内装一新・テイスト統一"},
+        {t:"水回りが古い・使いにくい",sol:"水回り刷新パック"},
+        {t:"部屋数や間取りが暮らしに合っていない",sol:"間取り変更・LDK拡張"}]},
       {q:"あえて選ぶなら、譲れないのは？",opts:[
         {t:"全員集まれる共用空間",points:{family:2,guest:1}},
         {t:"世帯ごとの独立性",points:{privacy:2}},
@@ -590,10 +666,10 @@ const HOUSEHOLDS = {
         {t:"見せない美しい収納",points:{guest:2,func:1}},
         {t:"趣味の物を飾れる収納",points:{hobby:2}}]},
       {q:"内装の好みは？",opts:[
-        {t:"温かみのあるナチュラル",points:{family:2,hobby:1}},
-        {t:"静かで上質な落ち着き",points:{privacy:2}},
-        {t:"ホテルのような洗練",points:{guest:2}},
-        {t:"シンプルで手入れが楽",points:{func:2}}]},
+        {t:"木の温もりを感じてホッとくつろぎたい",points:{family:2,hobby:1}},
+        {t:"静けさの中で自分の時間に浸りたい",points:{privacy:2}},
+        {t:"帰るたびに気分が上がる特別感がほしい",points:{guest:2}},
+        {t:"余計な物のないスッキリした心地よさがほしい",points:{func:2}}]},
       {q:"水回りで重視するのは？",opts:[
         {t:"ゆったり使える広さ",points:{family:1,func:1}},
         {t:"ゆっくり浸れる癒しの浴室",points:{privacy:2}},
@@ -604,11 +680,17 @@ const HOUSEHOLDS = {
         {t:"自分だけの落ち着く時間",points:{privacy:2}},
         {t:"いつでも人を招ける家",points:{guest:2}},
         {t:"手間なく快適に暮らせること",points:{func:2}}]},
-      {q:"リノベで一番ワクワクするのは？",opts:[
-        {t:"くつろげる理想の空間",points:{family:2}},
-        {t:"自分だけの世界をつくること",points:{privacy:1,hobby:2}},
-        {t:"人を呼びたくなる素敵な部屋",points:{guest:2}},
-        {t:"毎日の暮らしが楽になること",points:{func:2}}]},
+            {q:"今の住まいで、ストレスや不満を感じるのは？（当てはまるものすべて／複数選択可）",pain:true,opts:[
+        {t:"冬は寒い・夏は暑い、結露がつらい",sol:"断熱・内窓・床暖房"},
+        {t:"収納が足りず物があふれる",sol:"造作収納・ウォークイン"},
+        {t:"家事の動線が悪く時間がかかる",sol:"回遊動線・水回り集約"},
+        {t:"家族の気配が常にあり、ひとりになれない",sol:"個室・書斎・間仕切り"},
+        {t:"家族とのすれ違いが多く会話が減った",sol:"LDK集約・対面キッチン"},
+        {t:"人を気軽に呼べる家ではない",sol:"玄関・LDK開放、見せる空間"},
+        {t:"趣味や仕事のスペースがない",sol:"ワークスペース・土間・趣味室"},
+        {t:"内装が古く気分が上がらない",sol:"内装一新・テイスト統一"},
+        {t:"水回りが古い・使いにくい",sol:"水回り刷新パック"},
+        {t:"部屋数や間取りが暮らしに合っていない",sol:"間取り変更・LDK拡張"}]},
       {q:"あえて選ぶなら、譲れないのは？",opts:[
         {t:"広く開放的なリビング",points:{family:2,guest:1}},
         {t:"集中できる自分の部屋",points:{privacy:2}},
@@ -645,10 +727,10 @@ const HOUSEHOLDS = {
         {t:"見せない隠す収納",points:{guest:2,func:1}},
         {t:"子の作品や趣味を飾れる収納",points:{hobby:2}}]},
       {q:"内装の好みは？",opts:[
-        {t:"温かみのあるナチュラルな質感",points:{family:2,hobby:1}},
-        {t:"落ち着ける静かな空間",points:{privacy:2}},
-        {t:"気分の上がるおしゃれさ",points:{guest:2}},
-        {t:"汚れにくく手入れが楽",points:{func:2}}]},
+        {t:"木の温もりを感じてホッとくつろぎたい",points:{family:2,hobby:1}},
+        {t:"静けさの中で自分の時間に浸りたい",points:{privacy:2}},
+        {t:"帰るたびに気分が上がる特別感がほしい",points:{guest:2}},
+        {t:"余計な物のないスッキリした心地よさがほしい",points:{func:2}}]},
       {q:"水回りで重視するのは？",opts:[
         {t:"親子で使いやすい広さ・配置",points:{family:2,func:1}},
         {t:"一日の疲れを癒せる浴室",points:{privacy:2}},
@@ -659,11 +741,17 @@ const HOUSEHOLDS = {
         {t:"子が落ち着ける個室",points:{privacy:2}},
         {t:"来客時も安心な動線",points:{guest:1,func:1}},
         {t:"段差や危険を減らした設計",points:{func:2}}]},
-      {q:"リノベで一番ワクワクするのは？",opts:[
-        {t:"親子で笑顔で過ごす風景",points:{family:2}},
-        {t:"自分が落ち着ける時間と場所",points:{privacy:2}},
-        {t:"人を呼びたくなる素敵な空間",points:{guest:2}},
-        {t:"毎日の家事・暮らしが楽になること",points:{func:2}}]},
+            {q:"今の住まいで、ストレスや不満を感じるのは？（当てはまるものすべて／複数選択可）",pain:true,opts:[
+        {t:"冬は寒い・夏は暑い、結露がつらい",sol:"断熱・内窓・床暖房"},
+        {t:"収納が足りず物があふれる",sol:"造作収納・ウォークイン"},
+        {t:"家事の動線が悪く時間がかかる",sol:"回遊動線・水回り集約"},
+        {t:"家族の気配が常にあり、ひとりになれない",sol:"個室・書斎・間仕切り"},
+        {t:"家族とのすれ違いが多く会話が減った",sol:"LDK集約・対面キッチン"},
+        {t:"人を気軽に呼べる家ではない",sol:"玄関・LDK開放、見せる空間"},
+        {t:"趣味や仕事のスペースがない",sol:"ワークスペース・土間・趣味室"},
+        {t:"内装が古く気分が上がらない",sol:"内装一新・テイスト統一"},
+        {t:"水回りが古い・使いにくい",sol:"水回り刷新パック"},
+        {t:"部屋数や間取りが暮らしに合っていない",sol:"間取り変更・LDK拡張"}]},
       {q:"あえて選ぶなら、譲れないのは？",opts:[
         {t:"親子で過ごす広いリビング",points:{family:2,guest:1}},
         {t:"子と自分の個室",points:{privacy:2}},
@@ -700,10 +788,10 @@ const HOUSEHOLDS = {
         {t:"見せない美しい収納",points:{guest:2,func:1}},
         {t:"趣味・思い出の品を飾れる収納",points:{hobby:2}}]},
       {q:"内装の好みは？",opts:[
-        {t:"温かみのあるナチュラルな質感",points:{family:2,hobby:1}},
-        {t:"落ち着いた上質な空間",points:{privacy:2}},
-        {t:"ホテルのような洗練",points:{guest:2}},
-        {t:"明るく・滑りにくく安全な素材",points:{func:2}}]},
+        {t:"木の温もりを感じてホッとくつろぎたい",points:{family:2,hobby:1}},
+        {t:"静けさの中で自分の時間に浸りたい",points:{privacy:2}},
+        {t:"帰るたびに気分が上がる特別感がほしい",points:{guest:2}},
+        {t:"明るく安全で、これからも安心して暮らしたい",points:{func:2}}]},
       {q:"水回りで重視するのは？",opts:[
         {t:"二人で使いやすい広さ",points:{family:2,func:1}},
         {t:"ゆっくり浸れる癒しの浴室",points:{privacy:2}},
@@ -714,11 +802,17 @@ const HOUSEHOLDS = {
         {t:"夫婦それぞれの時間を保てる家",points:{privacy:2}},
         {t:"人を招き続けられる家",points:{guest:2}},
         {t:"バリアフリーで長く安心な家",points:{func:2}}]},
-      {q:"リノベで一番ワクワクするのは？",opts:[
-        {t:"家族・夫婦で過ごす穏やかな時間",points:{family:2}},
-        {t:"自分の趣味に没頭できる場所",points:{privacy:1,hobby:2}},
-        {t:"人を招きたくなる素敵な空間",points:{guest:2}},
-        {t:"これからの暮らしが楽で安心なこと",points:{func:2}}]},
+            {q:"今の住まいで、ストレスや不満を感じるのは？（当てはまるものすべて／複数選択可）",pain:true,opts:[
+        {t:"冬は寒い・夏は暑い、結露がつらい",sol:"断熱・内窓・床暖房"},
+        {t:"収納が足りず物があふれる",sol:"造作収納・ウォークイン"},
+        {t:"家事の動線が悪く時間がかかる",sol:"回遊動線・水回り集約"},
+        {t:"家族の気配が常にあり、ひとりになれない",sol:"個室・書斎・間仕切り"},
+        {t:"家族とのすれ違いが多く会話が減った",sol:"LDK集約・対面キッチン"},
+        {t:"人を気軽に呼べる家ではない",sol:"玄関・LDK開放、見せる空間"},
+        {t:"趣味や仕事のスペースがない",sol:"ワークスペース・土間・趣味室"},
+        {t:"内装が古く気分が上がらない",sol:"内装一新・テイスト統一"},
+        {t:"水回りが古い・使いにくい",sol:"水回り刷新パック"},
+        {t:"部屋数や間取りが暮らしに合っていない",sol:"間取り変更・LDK拡張"}]},
       {q:"あえて選ぶなら、譲れないのは？",opts:[
         {t:"家族が集まる広いリビング",points:{family:2,guest:1}},
         {t:"自分の趣味・書斎の部屋",points:{privacy:2,hobby:1}},
@@ -732,7 +826,7 @@ const HOUSEHOLDS = {
 
 <script>
 const data = {TYPES, RESULTS, HOUSEHOLDS, TASTES, IMG_DIR, IMG_EXT, PLANS, PROMPT_FIXED, TASTE_PROMPT, RENO_PARTS};
-const state = {hh:null, building:null, taste:null, answers:{}, restore:null};
+const state = {hh:null, building:null, taste:null, mode:null, answers:{A:{},B:{}}, pains:{A:[],B:[]}, names:{A:"",B:""}, restore:null};
 const app = document.getElementById("app");
 const sub = document.getElementById("sub");
 
@@ -823,7 +917,32 @@ function renderSelect(){
 }
 
 function startHH(k){
-  state.hh=k; state.answers={}; state.taste=null; state.building=null;
+  state.hh=k; state.answers={A:{},B:{}}; state.pains={A:[],B:[]};
+  state.names={A:"",B:""}; state.mode=null; state.taste=null; state.building=null;
+  renderMode();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---- 人数（A / お二人）選択画面 ---- */
+function renderMode(){
+  sub.innerHTML = data.HOUSEHOLDS[state.hh].name+"。診断するのはお一人ですか、お二人ですか？";
+  const html=`<div class="card"><div class="qnum">STEP 2</div>
+    <div class="qtext">何名で診断しますか？</div>
+    <p style="font-size:13px;color:var(--ink-soft);margin-bottom:14px">
+      ご夫婦など二人で診断すると、それぞれの好みや意見のズレが見えて、ヒアリングの会話が深まります。</p>
+    <div class="hh-grid">
+      <div class="hh" onclick="startMode('solo')">
+        <span class="ico">🧍</span><div class="nm">お一人で診断</div><div class="de">回答者Aのみ</div></div>
+      <div class="hh" onclick="startMode('duo')">
+        <span class="ico">👥</span><div class="nm">お二人で診断</div><div class="de">回答者A・Bを並べて</div></div>
+    </div></div>
+    <div class="actions no-print">
+      <button class="btn btn-sub" style="flex:1" onclick="backToSelect()">家族構成を選び直す</button></div>`;
+  app.innerHTML=html;
+}
+
+function startMode(m){
+  state.mode=m;
   renderBuilding();
   window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -835,7 +954,7 @@ function renderBuilding(){
     {k:"man", ico:"🏢", nm:"マンション", de:"中古マンションのリノベ"},
     {k:"ko",  ico:"🏠", nm:"戸建て",     de:"中古戸建てのリノベ"},
   ];
-  let html=`<div class="card"><div class="qnum">STEP 2</div>
+  let html=`<div class="card"><div class="qnum">STEP 3</div>
     <div class="qtext">住まいのタイプは？</div><div class="hh-grid">`;
   opts.forEach(o=>{
     html+=`<div class="hh" onclick="startBuilding('${o.k}')">
@@ -844,7 +963,7 @@ function renderBuilding(){
   });
   html+=`</div></div>
     <div class="actions no-print">
-      <button class="btn btn-sub" style="flex:1" onclick="backToSelect()">家族構成を選び直す</button></div>`;
+      <button class="btn btn-sub" style="flex:1" onclick="renderMode()">人数を選び直す</button></div>`;
   app.innerHTML=html;
 }
 
@@ -857,7 +976,7 @@ function startBuilding(b){
 /* ---- テイスト選択画面（写真付き） ---- */
 function renderTaste(){
   sub.innerHTML = data.HOUSEHOLDS[state.hh].name+"。次に、好みのインテリアの雰囲気を選んでください。";
-  let html=`<div class="card"><div class="qnum">STEP 3</div>
+  let html=`<div class="card"><div class="qnum">STEP 4</div>
     <div class="qtext">好みのテイストは？<span style="font-size:13px;font-weight:400;color:var(--ink-soft)">　ピンとくる写真を選んでください</span></div>
     <div class="taste-grid">`;
   for(const k in data.TASTES){
@@ -888,60 +1007,111 @@ function startTaste(k){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* ---- 設問画面 ---- */
+/* ---- 設問画面（A / A・B 同時回答 + ペイン複数選択） ---- */
 function renderQuiz(){
   const Q = data.HOUSEHOLDS[state.hh].questions;
-  const total=Q.length, answered=Object.keys(state.answers).length;
-  let html=`<div class="progress no-print"><span style="width:${answered/total*100}%"></span></div>
-    <div class="pcount no-print">${answered} / ${total} 問</div>`;
+  const duo = state.mode==="duo";
+  // 価値観設問（pain以外）のインデックス
+  const valIdx = Q.map((q,i)=>q.pain?null:i).filter(i=>i!==null);
+  const totalVal = valIdx.length;
+  const ansA = valIdx.filter(i=>state.answers.A[i]!==undefined).length;
+  const ansB = valIdx.filter(i=>state.answers.B[i]!==undefined).length;
+  const answered = duo ? Math.min(ansA,ansB) : ansA;
+
+  let html=`<div class="progress no-print"><span style="width:${answered/totalVal*100}%"></span></div>
+    <div class="pcount no-print">${answered} / ${totalVal} 問${duo?`（A:${ansA} ・ B:${ansB}）`:""}</div>`;
+
+  if(duo){
+    html+=`<div class="ab-head no-print">
+      <span class="chip chipA">A：${state.names.A||"回答者A"}</span>
+      <span class="chip chipB">B：${state.names.B||"回答者B"}</span></div>`;
+  }
+
   Q.forEach((q,i)=>{
-    html+=`<div class="card"><div class="qnum">QUESTION ${i+1}</div>
-      <div class="qtext">${q.q}</div><div class="opts">`;
-    q.opts.forEach((o,j)=>{
-      const sel=state.answers[i]===j?"sel":"";
-      html+=`<div class="opt ${sel}" onclick="pick(${i},${j})"><div class="dot"></div><div>${o.t}</div></div>`;
-    });
-    html+=`</div></div>`;
+    if(q.pain){
+      // ペイン設問：複数選択
+      html+=`<div class="card"><div class="qnum">QUESTION ${i+1}</div>
+        <div class="qtext">${q.q}</div>
+        <p class="pain-note no-print">この回答は暮らしタイプの点数には影響しません。提案のヒントとして使います。</p>
+        <div class="pains">`;
+      q.opts.forEach((o,j)=>{
+        const onA=state.pains.A.includes(j)?"onA":"";
+        const onB=state.pains.B.includes(j)?"onB":"";
+        html+=`<div class="painrow"><div class="label">${o.t}</div><div class="ppick">
+          <div class="ptag ${duo?"":"solo"} ${onA}" onclick="togglePain('A',${j})">${duo?"A":"選ぶ"}</div>
+          ${duo?`<div class="ptag onbcandidate ${onB}" onclick="togglePain('B',${j})">B</div>`:""}
+        </div></div>`;
+      });
+      html+=`</div></div>`;
+    }else{
+      // 価値観設問：A/B それぞれ1択
+      html+=`<div class="card"><div class="qnum">QUESTION ${i+1}</div>
+        <div class="qtext">${q.q}</div><div class="opts">`;
+      q.opts.forEach((o,j)=>{
+        const onA=state.answers.A[i]===j?"onA":"";
+        const onB=state.answers.B[i]===j?"onB":"";
+        html+=`<div class="abopt"><div class="label">${o.t}</div><div class="abpick">
+          <div class="abtag ${duo?"":"solo"} ${onA}" onclick="pickAB('A',${i},${j})">A${duo?"":"<small>選ぶ</small>"}</div>
+          ${duo?`<div class="abtag ${onB}" onclick="pickAB('B',${i},${j})">B</div>`:""}
+        </div></div>`;
+      });
+      html+=`</div></div>`;
+    }
   });
-  const ready=answered===total;
+
+  const ready = answered===totalVal;
   html+=`<div class="actions no-print">
     <button class="btn btn-sub" onclick="renderTaste()">テイストを選び直す</button>
     <button class="btn btn-main" ${ready?"":"disabled"} onclick="showResult()">
-      ${ready?"診断結果を見る":`あと ${total-answered} 問`}</button></div>`;
+      ${ready?"診断結果を見る":`あと ${totalVal-answered} 問`}</button></div>`;
   app.innerHTML=html;
 }
 
 function backToSelect(){
-  state.hh=null; state.building=null; state.taste=null; state.answers={};
+  state.hh=null; state.building=null; state.taste=null; state.mode=null;
+  state.answers={A:{},B:{}}; state.pains={A:[],B:[]}; state.names={A:"",B:""};
   sub.innerHTML="まずはご家族の構成を選んでください。<br>構成に合わせた質問で、ぴったりのリノベ方針をご提案します。";
   renderSelect();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-function pick(i,j){
-  state.answers[i]=j;
+/* 価値観設問の選択（A/Bそれぞれ1択） */
+function pickAB(who,i,j){
+  state.answers[who][i]=j;
+  const sc=window.scrollY;
   renderQuiz();
-  const cards=document.querySelectorAll(".card");
-  if(state.answers[i+1]===undefined && cards[i+1]) cards[i+1].scrollIntoView({behavior:"smooth",block:"center"});
+  window.scrollTo({top:sc});
 }
 
-/* ---- スコア集計・結果 ---- */
-function calcScores(){
+/* ペイン設問の選択（複数選択トグル） */
+function togglePain(who,j){
+  const arr=state.pains[who];
+  const idx=arr.indexOf(j);
+  if(idx>=0) arr.splice(idx,1); else arr.push(j);
+  const sc=window.scrollY;
+  renderQuiz();
+  window.scrollTo({top:sc});
+}
+
+/* ---- スコア集計（A/B独立・ペインは非加点） ---- */
+function calcScores(who){
   const Q=data.HOUSEHOLDS[state.hh].questions;
+  const ans=state.answers[who]||{};
   const s={}; Object.keys(data.TYPES).forEach(k=>s[k]=0);
-  Q.forEach((q,i)=>{const o=q.opts[state.answers[i]]; if(o)for(const k in o.points)s[k]+=o.points[k];});
+  Q.forEach((q,i)=>{
+    if(q.pain) return; // ペインは加点しない
+    const o=q.opts[ans[i]];
+    if(o&&o.points)for(const k in o.points)s[k]+=o.points[k];
+  });
   return s;
 }
 
-function showResult(){
-  const H=data.HOUSEHOLDS[state.hh];
-  const scores=calcScores(), keys=Object.keys(data.TYPES);
+/* タイプ別スコアからトップタイプ・バー・文言を組み立てる */
+function buildPersonResult(scores){
+  const keys=Object.keys(data.TYPES);
   const max=Math.max(...keys.map(k=>scores[k]));
   const topKey=keys.find(k=>scores[k]===max);
-  const T=data.TYPES[topKey], R=data.RESULTS[topKey];
   const maxScore=max||1;
-  const today=new Date().toLocaleDateString("ja-JP",{year:"numeric",month:"long",day:"numeric"});
-
   let bars="";
   [...keys].sort((a,b)=>scores[b]-scores[a]).forEach(k=>{
     const top=k===topKey?"top":"";
@@ -949,24 +1119,106 @@ function showResult(){
       <div class="sbar ${top}"><span style="width:${scores[k]/maxScore*100}%"></span></div>
       <div class="sval">${scores[k]}</div></div>`;
   });
+  return {topKey, T:data.TYPES[topKey], R:data.RESULTS[topKey], bars};
+}
+
+function showResult(){
+  const H=data.HOUSEHOLDS[state.hh];
+  const Q=H.questions;
+  const duo = state.mode==="duo";
+  const keys=Object.keys(data.TYPES);
+  const today=new Date().toLocaleDateString("ja-JP",{year:"numeric",month:"long",day:"numeric"});
+
+  // A・B 各人のスコアと結果
+  const scoresA=calcScores("A"), rA=buildPersonResult(scoresA);
+  const scoresB=duo?calcScores("B"):null, rB=duo?buildPersonResult(scoresB):null;
+
+  // 主軸（間取り・テイスト・おすすめ方針）はA基準
+  const topKey=rA.topKey, T=rA.T, R=rA.R;
+  const bars=rA.bars;
   let plan=""; R.plan.forEach(p=>plan+=`<li>${p}</li>`);
+
+  // ▼ A・B 2果カード
+  const nameA=state.names.A||"回答者A";
+  const nameB=state.names.B||"回答者B";
+  let twoResults="";
+  if(duo){
+    const same = rA.topKey===rB.topKey;
+    twoResults=`<div class="two-results">
+      <div class="person-card A"><div class="who">A：${nameA}</div>
+        <div class="ptype">${rA.T.label}</div>
+        <div class="scores">${rA.bars}</div></div>
+      <div class="person-card B"><div class="who">B：${nameB}</div>
+        <div class="ptype">${rB.T.label}</div>
+        <div class="scores">${rB.bars}</div></div>
+    </div>
+    <div class="rcard"><h3>お二人の傾向</h3>
+      <p>${same
+        ? `お二人とも<b>${rA.T.label}</b>。価値観の方向性が揃っています。共通の理想を軸に提案を進めやすいご夫婦です。`
+        : `Aさまは<b>${rA.T.label}</b>、Bさまは<b>${rB.T.label}</b>。重視するポイントに違いがあります。どちらも活かせるよう、両方の希望を両立する提案がポイントです。`}</p></div>`;
+  }
+
+  // ▼ 優先解決ペイン（別軸・スコア非加点）
+  let painResult="";
+  const painQ = Q.find(q=>q.pain);
+  if(painQ){
+    const setA=new Set(state.pains.A), setB=new Set(state.pains.B);
+    const all=[...new Set([...state.pains.A, ...state.pains.B])];
+    if(all.length){
+      let rows="";
+      all.forEach(j=>{
+        const o=painQ.opts[j]; if(!o) return;
+        const inA=setA.has(j), inB=setB.has(j);
+        let who="", cls="";
+        if(duo){
+          if(inA&&inB){who="A・B";cls="whoAB";}
+          else if(inA){who="A";cls="whoA";}
+          else{who="B";cls="whoB";}
+        }
+        rows+=`<div class="pain-item">
+          ${duo?`<span class="who-badge ${cls}">${who}</span>`:""}
+          <span class="pl">${o.t}</span>
+          <span class="sol no-print">→ ${o.sol}</span></div>`;
+      });
+      painResult=`<div class="rcard"><h3>優先して解決したい不満</h3>
+        <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">
+          リノベで最初に解決すべきポイントです。<span class="no-print">右の「→」は提案の方向（営業確認用）。</span></p>
+        <div class="pain-result">${rows}</div></div>`;
+    }
+  }
 
   // ▼ スタッフ向け：お客様の回答詳細一覧
   const TSx = data.TASTES[state.taste];
   const bldName = state.building==="ko" ? "戸建て" : state.building==="man" ? "マンション" : "未選択";
   let ansRows="";
-  data.HOUSEHOLDS[state.hh].questions.forEach((q,i)=>{
-    const sel=q.opts[state.answers[i]];
-    ansRows+=`<div class="ansrow">
-      <div class="ansq">Q${i+1}. ${q.q}</div>
-      <div class="ansa">→ ${sel?sel.t:"（未回答）"}</div></div>`;
+  Q.forEach((q,i)=>{
+    if(q.pain){
+      const pa=state.pains.A.map(j=>q.opts[j]&&q.opts[j].t).filter(Boolean);
+      const pb=state.pains.B.map(j=>q.opts[j]&&q.opts[j].t).filter(Boolean);
+      let av = duo
+        ? `A：${pa.length?pa.join("／"):"なし"}<br>B：${pb.length?pb.join("／"):"なし"}`
+        : (pa.length?pa.join("／"):"なし");
+      ansRows+=`<div class="ansrow">
+        <div class="ansq">Q${i+1}. ${q.q}</div>
+        <div class="ansa">→ ${av}</div></div>`;
+    }else{
+      const sa=q.opts[state.answers.A[i]];
+      const sb=q.opts[state.answers.B[i]];
+      let av = duo
+        ? `A：${sa?sa.t:"（未回答）"}<br>B：${sb?sb.t:"（未回答）"}`
+        : (sa?sa.t:"（未回答）");
+      ansRows+=`<div class="ansrow">
+        <div class="ansq">Q${i+1}. ${q.q}</div>
+        <div class="ansa">→ ${av}</div></div>`;
+    }
   });
+  const typeLine = duo ? `A：${rA.T.label}／B：${rB.T.label}` : rA.T.label;
   const answerSheet=`<div class="rcard sheet"><h3>お客様の回答詳細（スタッフ確認用）</h3>
     <div class="ansmeta">
       <span>家族構成：<b>${H.name}</b></span>
       <span>住まい：<b>${bldName}</b></span>
       <span>好みテイスト：<b>${TSx?TSx.name:"未選択"}</b></span>
-      <span>診断タイプ：<b>${T.label}</b></span>
+      <span>診断タイプ：<b>${typeLine}</b></span>
     </div>
     ${ansRows}
   </div>`;
@@ -1006,18 +1258,23 @@ function showResult(){
     <div class="cust no-print">
       <input id="cname" placeholder="お客様のお名前（任意）" value="${esc(r.cname)}">
       <input id="cprop" placeholder="物件名・メモ（任意）" value="${esc(r.cprop)}"></div>
+    ${duo?`<div class="cust no-print">
+      <input id="nameA" placeholder="回答者Aのお名前（任意）" value="${esc(state.names.A)}">
+      <input id="nameB" placeholder="回答者Bのお名前（任意）" value="${esc(state.names.B)}"></div>`:""}
     <div class="rhead">
-      <div class="lead">あなたの暮らしタイプは</div>
+      <div class="lead">${duo?"Aさまの":"あなたの"}暮らしタイプは</div>
       <div class="rtype"><span class="em">${T.label}</span></div>
       <div class="tag">${R.catch}</div>
       <div class="hhname">${H.ico} ${H.name}</div>
       ${TS?`<div class="hhname">${TS.name}</div>`:""}</div>
-    <div class="rcard"><h3>診断コメント</h3>
+    ${twoResults}
+    <div class="rcard"><h3>診断コメント${duo?"（Aさま）":""}</h3>
       <p>${R.desc}</p><p>${H.note}</p></div>
-    <div class="rcard"><h3>おすすめのリノベ方針</h3><ul>${plan}</ul></div>
+    <div class="rcard"><h3>おすすめのリノベ方針${duo?"（Aさま基準）":""}</h3><ul>${plan}</ul></div>
+    ${painResult}
     ${planSvg}
     ${gallery}
-    <div class="rcard"><h3>あなたの暮らしバランス</h3><div class="scores">${bars}</div></div>
+    ${duo?"":`<div class="rcard"><h3>あなたの暮らしバランス</h3><div class="scores">${bars}</div></div>`}
     ${answerSheet}
     <div class="rcard memo no-print"><h3>営業メモ</h3>
       <label>ヒアリング内容・次回提案ポイントなど</label>
@@ -1063,6 +1320,10 @@ function showResult(){
     im.src=url;
   }
   state.restore=null;
+  // お二人モード：名前入力をstateに反映（再描画で消えないように）
+  const nA=document.getElementById("nameA"), nB=document.getElementById("nameB");
+  if(nA) nA.addEventListener("input",e=>state.names.A=e.target.value);
+  if(nB) nB.addEventListener("input",e=>state.names.B=e.target.value);
   genRows=[]; addGenRow();  // プロンプト生成の初期行
   window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -1165,11 +1426,14 @@ async function saveData(){
   const cname=(document.getElementById("cname")||{}).value||"";
   const cprop=(document.getElementById("cprop")||{}).value||"";
   const memo=(document.getElementById("memo")||{}).value||"";
+  const nA=(document.getElementById("nameA")||{}).value; if(nA!==undefined) state.names.A=nA;
+  const nB=(document.getElementById("nameB")||{}).value; if(nB!==undefined) state.names.B=nB;
   const payload={
-    app:"vivi-reno-shindan", version:1,
+    app:"vivi-reno-shindan", version:2,
     savedAt:new Date().toISOString(),
     date:new Date().toLocaleDateString("ja-JP",{year:"numeric",month:"long",day:"numeric"}),
-    hh:state.hh, building:state.building, taste:state.taste, answers:state.answers,
+    hh:state.hh, building:state.building, taste:state.taste, mode:state.mode,
+    answers:state.answers, pains:state.pains, names:state.names,
     cname, cprop, memo
   };
   const json=JSON.stringify(payload,null,2);
@@ -1203,7 +1467,7 @@ async function saveData(){
   alert("診断データを保存しました。\n\nファイル名："+fname+"\n（パソコンのダウンロードフォルダに入ります）\n\n別のスタッフと共有するときは、このファイルを渡してください。\n最初の画面の「保存データを読み込む」から開けます。");
 }
 
-/* ---- データ読み込み（JSON復元） ---- */
+/* ---- データ読み込み（JSON復元・旧形式も後方互換） ---- */
 function loadData(e){
   const file=e.target.files[0];
   if(!file) return;
@@ -1216,12 +1480,29 @@ function loadData(e){
       state.hh=d.hh;
       state.building=d.building||null;
       state.taste=d.taste||null;
-      state.answers=d.answers||{};
+
+      // 旧形式（version 1：answersが {0:1,...} の単一）を新形式へ変換
+      const isOld = !d.answers || (d.answers && d.answers.A===undefined);
+      if(isOld){
+        state.mode="solo";
+        state.answers={A:d.answers||{}, B:{}};
+        state.pains={A:[], B:[]};
+        state.names={A:"", B:""};
+      }else{
+        state.mode=d.mode||"solo";
+        state.answers={A:d.answers.A||{}, B:d.answers.B||{}};
+        state.pains={A:(d.pains&&d.pains.A)||[], B:(d.pains&&d.pains.B)||[]};
+        state.names={A:(d.names&&d.names.A)||"", B:(d.names&&d.names.B)||""};
+      }
       state.restore={cname:d.cname,cprop:d.cprop,memo:d.memo,date:d.date};
       sub.innerHTML=data.HOUSEHOLDS[d.hh].name+"の診断データを読み込みました。";
-      // 全問回答済みなら結果へ、未完なら設問画面へ
-      const total=data.HOUSEHOLDS[d.hh].questions.length;
-      if(Object.keys(state.answers).length>=total) showResult();
+
+      // 価値観設問が全問回答済みなら結果へ、未完なら設問画面へ
+      const Q=data.HOUSEHOLDS[d.hh].questions;
+      const valIdx=Q.map((q,i)=>q.pain?null:i).filter(i=>i!==null);
+      const okA=valIdx.every(i=>state.answers.A[i]!==undefined);
+      const okB=state.mode==="duo" ? valIdx.every(i=>state.answers.B[i]!==undefined) : true;
+      if(okA&&okB) showResult();
       else renderQuiz();
     }catch(err){
       alert("読み込めませんでした。\n"+(err.message||"ファイル形式を確認してください。"));
