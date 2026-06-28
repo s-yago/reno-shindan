@@ -1089,7 +1089,18 @@ function pickAB(who,i,j){
   state.answers[who][i]=j;
   const sc=window.scrollY;
   renderQuiz();
-  window.scrollTo({top:sc});
+  // この設問が完了（お一人ならA、お二人ならA・B両方）したら次の設問へ送る
+  const duo = state.mode==="duo";
+  const done = duo
+    ? (state.answers.A[i]!==undefined && state.answers.B[i]!==undefined)
+    : (state.answers.A[i]!==undefined);
+  if(done){
+    const cards=document.querySelectorAll(".card");
+    if(cards[i+1]) cards[i+1].scrollIntoView({behavior:"smooth",block:"center"});
+    else window.scrollTo({top:sc});
+  }else{
+    window.scrollTo({top:sc});
+  }
 }
 
 /* ペイン設問の選択（複数選択トグル） */
