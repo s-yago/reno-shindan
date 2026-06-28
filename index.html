@@ -746,7 +746,7 @@ const MANUAL_HTML = `
 <p>結果画面の「印刷・PDF」ボタンを押すと印刷画面が開きます。紙に印刷してお渡しするか、送信先を「PDFに保存」に変えるとPDFファイルとして残せます。操作ボタンや入力欄は印刷には出ません。</p>
 
 <h3>データの保存と読み込み（引き継ぎ）</h3>
-<p><b>保存：</b>結果画面の「データ保存」ボタンを押すと、「リノベ診断_お客様名_日付.json」というファイルがパソコンのダウンロードフォルダに保存されます。社内の共有フォルダに置けば、お客様ごとの診断カルテになります。</p>
+<p><b>保存：</b>結果画面の「データ保存」ボタンを押すと、「リノベ診断_お客様名_日付.json」というファイルが保存されます。Chrome・Edgeなど対応ブラウザでは、保存するときに保存先を選べます（リノベ診断専用のフォルダを作ってそこに保存することもできます）。SafariやMacなど非対応の場合は、パソコンのダウンロードフォルダに保存されます。社内の共有フォルダに置けば、お客様ごとの診断カルテになります。</p>
 <p><b>読み込み：</b>最初の画面の「保存データを読み込む」ボタンから、保存した.jsonファイルを選ぶと、回答・結果・メモがそのまま復元されます。担当者が変わっても引き継げます。</p>
 <p style="font-size:13px;color:var(--ink-soft)">※ 残金決済ツールと同じJSON方式です。.jsonファイルは直接開かず、このツールの「読み込む」から開いてください。</p>
 
@@ -1122,7 +1122,7 @@ function copyPrompt(i){
 }
 
 /* ---- データ保存（JSON書き出し） ---- */
-function saveData(){
+async function saveData(){
   const cname=(document.getElementById("cname")||{}).value||"";
   const cprop=(document.getElementById("cprop")||{}).value||"";
   const memo=(document.getElementById("memo")||{}).value||"";
@@ -1133,15 +1133,35 @@ function saveData(){
     hh:state.hh, building:state.building, taste:state.taste, answers:state.answers,
     cname, cprop, memo
   };
-  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
-  const url=URL.createObjectURL(blob);
+  const json=JSON.stringify(payload,null,2);
   const stamp=new Date().toISOString().slice(0,10);
   const safe=(cname||"診断").replace(/[\\/:*?"<>|]/g,"_");
+  const fname=`リノベ診断_${safe}_${stamp}.json`;
+
+  // 対応ブラウザ（Chrome系）：保存先を選べる
+  if(window.showSaveFilePicker){
+    try{
+      const handle=await window.showSaveFilePicker({
+        suggestedName:fname,
+        types:[{description:"診断データ",accept:{"application/json":[".json"]}}]
+      });
+      const w=await handle.createWritable();
+      await w.write(json); await w.close();
+      alert("診断データを保存しました。\nファイル名："+fname);
+      return;
+    }catch(err){
+      if(err && err.name==="AbortError") return; // ユーザーがキャンセル
+      // それ以外は従来方式にフォールバック
+    }
+  }
+  // 非対応ブラウザ：従来どおりダウンロードフォルダへ
+  const blob=new Blob([json],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
-  a.href=url; a.download=`リノベ診断_${safe}_${stamp}.json`;
+  a.href=url; a.download=fname;
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
-  alert("診断データを保存しました。\n\nファイル名：リノベ診断_"+(cname||"診断")+"_"+stamp+".json\n（パソコンのダウンロードフォルダに入ります）\n\n別のスタッフと共有するときは、このファイルを渡してください。\n最初の画面の「保存データを読み込む」から開けます。");
+  alert("診断データを保存しました。\n\nファイル名："+fname+"\n（パソコンのダウンロードフォルダに入ります）\n\n別のスタッフと共有するときは、このファイルを渡してください。\n最初の画面の「保存データを読み込む」から開けます。");
 }
 
 /* ---- データ読み込み（JSON復元） ---- */
